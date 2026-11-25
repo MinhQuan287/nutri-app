@@ -812,29 +812,62 @@
         </div>
       </div>
 
-      <!-- Sub-view: AI COACH -->
+      <!-- Sub-view: AI COACH (Real Gemini AI with Full Health Context) -->
       <div id="sub-view-coach" class="hidden space-y-3">
-        <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 space-y-2 text-xs">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Báo cáo phân tích hôm nay</span>
-            <span class="text-[9px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800">Online</span>
+        <!-- Gemini AI Connection Status Bar -->
+        <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2">
+          <button onclick="toggleCoachKeyBox()" class="w-full flex items-center justify-between text-[11px] font-bold">
+            <span id="coach-api-status" class="text-amber-300">🔑 Chưa kết nối Gemini AI (Bấm để dán API Key)</span>
+            <span class="text-slate-400">⚙️</span>
+          </button>
+          <div id="coach-key-box" class="hidden pt-2 border-t border-slate-800 space-y-2">
+            <p class="text-[10px] text-slate-400 leading-relaxed">
+              Dán <b>Gemini API Key miễn phí</b> để Trợ lý AI đọc toàn bộ chỉ số BMI, cân nặng, lịch sử ăn & tập luyện của bạn và tư vấn thật 100% (dùng chung cho cả Chụp ảnh AI & ✨ AI Tra):
+            </p>
+            <div class="flex gap-1.5">
+              <input type="password" id="coach-key-input" placeholder="Dán mã AIzaSy... vào đây" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white">
+              <button onclick="saveCoachGeminiKey()" class="px-3.5 py-2 bg-emerald-500 text-slate-950 font-black rounded-lg text-xs shrink-0">Lưu Key</button>
+            </div>
+            <a href="https://aistudio.google.com/apikey" target="_blank" class="inline-block text-[10px] text-sky-400 underline font-semibold">👉 Lấy Gemini API Key miễn phí tại Google AI Studio ↗</a>
           </div>
-          <p id="coach-summary-text" class="text-slate-300 leading-relaxed">
-            Đang phân tích các thông số nạp và tiêu hao của bạn...
-          </p>
-          <div id="coach-tips-box" class="pt-2 border-t border-slate-800 space-y-1 text-slate-300"></div>
         </div>
 
-        <div class="space-y-2">
-          <span class="text-xs font-bold text-white block">Hỏi đáp dinh dưỡng với AI:</span>
-          <div id="coach-chat-history" class="space-y-2 max-h-52 overflow-y-auto no-scrollbar">
-            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300">
-              🤖 Chào bạn! Tôi là Antigravity AI Coach. Bạn có thắc mắc gì về thực đơn bữa tối hay bù nước sau trận đá bóng không?
-            </div>
+        <!-- Daily Quick Summary Card -->
+        <div class="bg-slate-900 rounded-2xl p-3.5 border border-slate-800 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Tóm tắt chỉ số hôm nay</span>
+            <span id="coach-online-badge" class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">Chưa có Key</span>
           </div>
-          <div class="flex gap-1.5">
-            <input type="text" id="coach-chat-input" placeholder="Hỏi AI: 'Tối nay ăn gì?', 'Đá bóng uống gì?'..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden">
-            <button onclick="handleCoachChat()" class="px-3.5 bg-emerald-500 text-slate-950 font-black rounded-xl text-xs">Gửi</button>
+          <p id="coach-summary-text" class="text-slate-300 leading-relaxed text-[11px]">
+            Đang tổng hợp thông số nạp và tiêu hao của bạn...
+          </p>
+          <div id="coach-tips-box" class="pt-1.5 border-t border-slate-800 space-y-1 text-slate-300 text-[11px]"></div>
+        </div>
+
+        <!-- Real Gemini AI Chat Section -->
+        <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-white">🤖 Chat trực tiếp với Gemini AI Coach</span>
+            <button onclick="clearCoachChat()" class="text-[10px] text-slate-400 hover:text-rose-400 font-semibold">🗑️ Xóa chat</button>
+          </div>
+
+          <!-- Quick Smart Prompts -->
+          <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-[10px] font-bold">
+            <button onclick="askCoachPreset('Hãy phân tích chi tiết chế độ ăn hôm nay và tuần này của tôi, chỉ ra điểm cần cải thiện.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-emerald-300 active:scale-95">📊 Phân tích tuần này</button>
+            <button onclick="askCoachPreset('Dựa trên lượng calo và đạm còn thiếu hôm nay, gợi ý cho tôi 2 thực đơn bữa tối Việt Nam cụ thể kèm số gram.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-sky-300 active:scale-95">🍽️ Gợi ý bữa tối</button>
+            <button onclick="askCoachPreset('Đánh giá tiến độ cân nặng của tôi từ mốc bắt đầu đến nay và đề xuất cách điều chỉnh ăn uống, tập luyện.')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-amber-300 active:scale-95">⚖️ Soi tiến độ giảm cân</button>
+            <button onclick="askCoachPreset('Hôm nay tôi đi đá bóng, tôi nên ăn uống gì trước và sau trận để giảm mỡ mà không mất cơ?')" class="shrink-0 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-violet-300 active:scale-95">⚽ Ăn uống khi đá bóng</button>
+          </div>
+
+          <!-- Chat History Container -->
+          <div id="coach-chat-history" class="space-y-2.5 max-h-72 min-h-[150px] overflow-y-auto no-scrollbar pr-0.5">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="flex gap-1.5 pt-1">
+            <input type="text" id="coach-chat-input" onkeydown="if(event.key==='Enter') handleCoachChat()" placeholder="Hỏi bất cứ điều gì về thực đơn, calo, tập luyện..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500">
+            <button onclick="handleCoachChat()" id="coach-send-btn" class="px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shrink-0 active:scale-95 transition">Gửi</button>
           </div>
         </div>
 
@@ -1252,6 +1285,8 @@
     const KEY_GEMINI = 'nutri_pwa_gemini_key';
     const KEY_CUSTOM_FOODS = 'nutri_pwa_custom_foods_v1';
     const KEY_RECENT_FOODS = 'nutri_pwa_recent_foods_v1';
+    const KEY_COACH_CHAT = 'nutri_pwa_coach_chat_v1';
+    let coachMessages = [];
 
     function formatDateToKey(d) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1352,12 +1387,9 @@
         document.getElementById('btn-male').className = profile.gender === 'male' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
         document.getElementById('btn-female').className = profile.gender === 'female' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
 
-        // Hydrate Gemini key status
-        const gk = localStorage.getItem(KEY_GEMINI);
-        if (gk) {
-          document.getElementById('gemini-api-key-input').value = gk;
-          document.getElementById('gemini-key-status-label').innerText = '✅ Đã kích hoạt Gemini Vision API Key (Bấm để sửa)';
-        }
+        // Hydrate Gemini key status across all screens
+        const cc = localStorage.getItem(KEY_COACH_CHAT);
+        if (cc) coachMessages = JSON.parse(cc);
       } catch (e) {
         console.error(e);
       }
@@ -1367,6 +1399,8 @@
       document.getElementById('manual-meal-time').value = getCurrentTimeStr();
       document.getElementById('wt-input-date').value = selectedLogDate;
       document.getElementById('wt-input-val').value = (profile.weight || 75.0).toFixed(1);
+      syncAllGeminiKeyUI();
+      renderCoachChat();
       updateFoodDbBadge();
       applySelectedManualFood(FOOD_DB_100G[0], false);
       renderFoodBrowser();
@@ -1856,8 +1890,7 @@
         return;
       }
       localStorage.setItem(KEY_GEMINI, k);
-      document.getElementById('gemini-api-key-input').value = k;
-      document.getElementById('gemini-key-status-label').innerText = '✅ Đã kích hoạt Gemini Vision API Key (Bấm để sửa)';
+      syncAllGeminiKeyUI();
       document.getElementById('manual-ai-key-prompt').classList.add('hidden');
       lookupFoodWithAI();
     }
@@ -2535,12 +2568,12 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
       const k = document.getElementById('gemini-api-key-input').value.trim();
       if (k) {
         localStorage.setItem(KEY_GEMINI, k);
-        document.getElementById('gemini-key-status-label').innerText = '✅ Đã kích hoạt Gemini Vision API Key (Bấm để sửa)';
         document.getElementById('gemini-key-box').classList.add('hidden');
-        alert('✅ Đã lưu Gemini API Key!');
+        syncAllGeminiKeyUI();
+        alert('✅ Đã lưu Gemini API Key! (Đã kích hoạt cho cả Chụp ảnh AI, AI Tra món và AI Coach)');
       } else {
         localStorage.removeItem(KEY_GEMINI);
-        document.getElementById('gemini-key-status-label').innerText = '⚙️ Cài đặt Gemini API Key (Để AI nhận diện ảnh thật 100%)';
+        syncAllGeminiKeyUI();
       }
     }
 
@@ -2759,30 +2792,254 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
       }
     }
 
-    function handleCoachChat() {
+    function syncAllGeminiKeyUI() {
+      const gk = localStorage.getItem(KEY_GEMINI) || '';
+      const camInput = document.getElementById('gemini-api-key-input');
+      const camLabel = document.getElementById('gemini-key-status-label');
+      const coachInput = document.getElementById('coach-key-input');
+      const coachStatus = document.getElementById('coach-api-status');
+      const coachBadge = document.getElementById('coach-online-badge');
+
+      if (camInput) camInput.value = gk;
+      if (coachInput) coachInput.value = gk;
+
+      if (gk) {
+        if (camLabel) camLabel.innerText = '✅ Đã kích hoạt Gemini Vision API Key (Bấm để sửa)';
+        if (coachStatus) {
+          coachStatus.innerText = '✅ Đã kết nối Gemini AI thật (Bấm để đổi Key)';
+          coachStatus.className = 'text-emerald-400';
+        }
+        if (coachBadge) {
+          coachBadge.innerText = 'Gemini 2.5 Online';
+          coachBadge.className = 'text-[9px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800';
+        }
+      } else {
+        if (camLabel) camLabel.innerText = '⚙️ Cài đặt Gemini API Key (Để AI nhận diện ảnh thật 100%)';
+        if (coachStatus) {
+          coachStatus.innerText = '🔑 Chưa kết nối Gemini AI (Bấm để dán API Key)';
+          coachStatus.className = 'text-amber-300';
+        }
+        if (coachBadge) {
+          coachBadge.innerText = 'Chưa dán Key';
+          coachBadge.className = 'text-[9px] bg-amber-950/60 text-amber-400 px-2 py-0.5 rounded-full border border-amber-700/60';
+        }
+      }
+    }
+
+    function toggleCoachKeyBox() {
+      document.getElementById('coach-key-box').classList.toggle('hidden');
+    }
+
+    function saveCoachGeminiKey() {
+      const k = document.getElementById('coach-key-input').value.trim();
+      if (k) {
+        localStorage.setItem(KEY_GEMINI, k);
+        document.getElementById('coach-key-box').classList.add('hidden');
+        syncAllGeminiKeyUI();
+        alert('✅ Đã kết nối thành công Gemini AI! Bây giờ bạn có thể trò chuyện trực tiếp với Trợ lý AI.');
+      } else {
+        localStorage.removeItem(KEY_GEMINI);
+        syncAllGeminiKeyUI();
+      }
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function formatAiMarkdown(text) {
+      let safe = escapeHtml(text || '');
+      safe = safe.replace(/\*\*(.+?)\*\*/g, '<b class="text-white">$1</b>');
+      safe = safe.replace(/\*(.+?)\*/g, '<i>$1</i>');
+      safe = safe.replace(/^\s*[-*]\s+/gm, '• ');
+      safe = safe.replace(/\n/g, '<br>');
+      return safe;
+    }
+
+    function buildHealthContextPrompt() {
+      const todayKey = getTodayDateStr();
+      const totalIn = todayMeals.reduce((acc, m) => acc + (Number(m.calories) || 0), 0);
+      const pIn = Math.round(todayMeals.reduce((acc, m) => acc + (Number(m.p) || 0), 0) * 10) / 10;
+      const cIn = Math.round(todayMeals.reduce((acc, m) => acc + (Number(m.c) || 0), 0) * 10) / 10;
+      const fIn = Math.round(todayMeals.reduce((acc, m) => acc + (Number(m.f) || 0), 0) * 10) / 10;
+      const totalBurned = todayWorkouts.reduce((acc, w) => acc + (Number(w.burnedKcal) || 0), 0);
+
+      // 7-day history digest
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 6);
+      const cutoffKey = formatDateToKey(cutoff);
+      const recentMeals7d = allMealsStore.filter(m => m.date >= cutoffKey);
+      const recentWorkouts7d = allWorkoutsStore.filter(w => w.date >= cutoffKey);
+
+      const mealsByDay = {};
+      recentMeals7d.forEach(m => {
+        if (!mealsByDay[m.date]) mealsByDay[m.date] = { cal: 0, p: 0, count: 0 };
+        mealsByDay[m.date].cal += Number(m.calories) || 0;
+        mealsByDay[m.date].p += Number(m.p) || 0;
+        mealsByDay[m.date].count += 1;
+      });
+      const weekSummaryLines = Object.keys(mealsByDay).sort().map(d =>
+        `- ${d}: ${mealsByDay[d].cal} kcal, ${Math.round(mealsByDay[d].p)}g đạm (${mealsByDay[d].count} món)`
+      ).join('\n') || '- Chưa có dữ liệu 7 ngày qua';
+
+      const todayMealLines = todayMeals.length > 0
+        ? todayMeals.map(m => `- [${m.mealType || 'Bữa ăn'} ${m.time || ''}] ${m.name} (${m.weightGrams || '?'}g): ${m.calories} kcal (P:${m.p}g, C:${m.c}g, F:${m.f}g)`).join('\n')
+        : '- Hôm nay chưa ghi nhận bữa ăn nào';
+
+      const workoutLines = recentWorkouts7d.length > 0
+        ? recentWorkouts7d.slice(0, 10).map(w => `- [${w.date}] ${w.title}: ${w.duration} phút (-${w.burnedKcal} kcal)`).join('\n')
+        : '- 7 ngày qua chưa ghi nhận buổi tập nào';
+
+      const wtLines = weightLogs.length > 0
+        ? weightLogs.slice(-10).map(w => `- ${w.date}: ${w.weight}kg (${w.note || ''})`).join('\n')
+        : `- Chưa có lịch sử cân (hiện tại ${profile.weight || 75}kg)`;
+
+      return `Bạn là NutriAI Coach — chuyên gia dinh dưỡng thể thao & sức khỏe cá nhân của người dùng tại Việt Nam.
+Hãy trả lời bằng tiếng Việt tự nhiên, gần gũi, ngắn gọn, có số liệu cụ thể dựa trực tiếp trên DỮ LIỆU THỰC TẾ của người dùng dưới đây (không nói chung chung):
+
+[HỒ SƠ & MỤC TIÊU]
+- Ngày hôm nay: ${todayKey}
+- Giới tính: ${profile.gender === 'female' ? 'Nữ' : 'Nam'}, Tuổi: ${profile.age || 28}, Chiều cao: ${profile.height || 172}cm
+- Cân nặng mốc bắt đầu: ${profile.startWeight || profile.weight || 75}kg (từ ngày ${profile.startDate || todayKey})
+- Cân nặng hiện tại: ${profile.weight || 75}kg -> Mục tiêu: ${profile.targetWeight || 69}kg trong ${profile.months || 3} tháng
+- BMR: ${profile.bmr || 1685} kcal | TDEE: ${profile.tdee || 2350} kcal
+- Mục tiêu mỗi ngày: ${profile.targetCalories || 1830} kcal (Thâm hụt ${profile.dailyDeficit || 520} kcal) | Macro: P ${profile.targetP || 135}g, C ${profile.targetC || 185}g, F ${profile.targetF || 48}g
+
+[ĂN UỐNG HÔM NAY (${todayKey})]
+- Tổng đã nạp: ${totalIn} / ${profile.targetCalories || 1830} kcal (Còn lại: ${(profile.targetCalories || 1830) - totalIn} kcal)
+- Đã nạp Macro: Protein ${pIn}g, Carbs ${cIn}g, Fat ${fIn}g
+- Calo đốt do tập hôm nay: -${totalBurned} kcal
+- Chi tiết món hôm nay:
+${todayMealLines}
+
+[TỔNG HỢP ĂN UỐNG 7 NGÀY GẦN NHẤT]
+${weekSummaryLines}
+
+[TẬP LUYỆN 7 NGÀY GẦN NHẤT]
+${workoutLines}
+
+[LỊCH SỬ CÂN NẶNG]
+${wtLines}
+
+Nguyên tắc trả lời:
+- Luôn ưu tiên món ăn Việt Nam thực tế kèm định lượng gram/bát/đĩa cụ thể khi gợi ý thực đơn.
+- Thẳng thắn chỉ ra điểm thừa/thiếu (ví dụ thiếu đạm, thừa carb/fat, cân nặng chững) và đề xuất hành động cụ thể dễ áp dụng ngay.
+- Trình bày súc tích bằng gạch đầu dòng, dùng **in đậm** cho con số quan trọng.`;
+    }
+
+    function renderCoachChat() {
+      const hist = document.getElementById('coach-chat-history');
+      if (!hist) return;
+
+      const welcomeBubble = `
+        <div class="bg-slate-950/90 p-2.5 rounded-2xl border border-slate-800 text-xs text-slate-300 max-w-[92%] leading-relaxed">
+          🤖 Chào bạn! Tôi đã kết nối trực tiếp với toàn bộ dữ liệu BMI, cân nặng, nhật ký ăn uống & tập luyện trên máy của bạn. Hãy hỏi tôi bất kỳ câu hỏi nào hoặc bấm các nút gợi ý nhanh ở trên nhé!
+        </div>
+      `;
+
+      const msgHtml = coachMessages.map(m => {
+        if (m.role === 'user') {
+          return `<div class="bg-emerald-500 p-2.5 rounded-2xl rounded-br-sm text-xs text-slate-950 font-bold ml-auto max-w-[85%] leading-relaxed">${escapeHtml(m.text)}</div>`;
+        }
+        return `<div class="bg-slate-950/90 p-2.5 rounded-2xl rounded-bl-sm border border-slate-800 text-xs text-slate-200 max-w-[92%] leading-relaxed">🤖 ${formatAiMarkdown(m.text)}</div>`;
+      }).join('');
+
+      hist.innerHTML = welcomeBubble + msgHtml;
+      hist.scrollTop = hist.scrollHeight;
+    }
+
+    function clearCoachChat() {
+      if (coachMessages.length === 0) return;
+      if (!confirm('Xóa lịch sử trò chuyện để bắt đầu cuộc hỏi đáp mới?')) return;
+      coachMessages = [];
+      localStorage.removeItem(KEY_COACH_CHAT);
+      renderCoachChat();
+    }
+
+    function askCoachPreset(text) {
+      document.getElementById('coach-chat-input').value = text;
+      handleCoachChat();
+    }
+
+    async function handleCoachChat() {
       const input = document.getElementById('coach-chat-input');
+      const sendBtn = document.getElementById('coach-send-btn');
       const q = input.value.trim();
       if (!q) return;
 
-      const hist = document.getElementById('coach-chat-history');
-      hist.innerHTML += `<div class="bg-emerald-500 p-2.5 rounded-xl text-xs text-slate-950 font-bold ml-auto max-w-[85%]">${q}</div>`;
-      input.value = '';
+      const apiKey = localStorage.getItem(KEY_GEMINI);
+      if (!apiKey) {
+        document.getElementById('coach-key-box').classList.remove('hidden');
+        document.getElementById('coach-key-input').focus();
+        alert('🔑 Bạn chưa dán Gemini API Key! Hãy dán Key miễn phí vào khung phía trên để trò chuyện thật với Gemini AI.');
+        return;
+      }
 
-      setTimeout(() => {
-        let reply = '';
-        const qLow = removeTones(q);
-        if (qLow.includes('da bong') || qLow.includes('bong da')) {
-          reply = 'Một trận đá bóng ⚽ 45-60 phút đốt ~400-580 kcal. Sau trận nhớ bù 400ml nước điện giải và nạp 25-30g đạm (ức gà, trứng luộc hoặc sữa chua Hy Lạp) nhé!';
-        } else if (qLow.includes('toi')) {
-          const totalIn = todayMeals.reduce((acc, m) => acc + (Number(m.calories) || 0), 0);
-          const rem = (profile.targetCalories || 1830) - totalIn;
-          reply = `Bạn còn khoảng ${Math.max(0, rem)} kcal cho bữa tối. Nên ăn 150g ức gà áp chảo (248 kcal) + 200g rau luộc (60 kcal) là cực kỳ đẹp!`;
-        } else {
-          reply = `Hãy giữ mức nạp quanh ${profile.targetCalories || 1830} kcal/ngày và đủ ${profile.targetP || 135}g đạm để giảm mỡ giữ cơ hiệu quả nhất!`;
+      // Append user message
+      coachMessages.push({ role: 'user', text: q });
+      localStorage.setItem(KEY_COACH_CHAT, JSON.stringify(coachMessages.slice(-30)));
+      input.value = '';
+      renderCoachChat();
+
+      // Add live typing indicator
+      const hist = document.getElementById('coach-chat-history');
+      const typingId = 'coach-typing-' + Date.now();
+      hist.innerHTML += `
+        <div id="${typingId}" class="bg-slate-950/90 p-2.5 rounded-2xl border border-emerald-500/30 text-xs text-emerald-300 max-w-[85%] flex items-center gap-2">
+          <div class="w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+          <span>Gemini AI đang phân tích dữ liệu sức khỏe của bạn...</span>
+        </div>
+      `;
+      hist.scrollTop = hist.scrollHeight;
+
+      sendBtn.disabled = true;
+      sendBtn.innerText = '...';
+
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        // Send last 10 turns for smooth multi-turn context
+        const contents = coachMessages.slice(-10).map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }]
+        }));
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: buildHealthContextPrompt() }] },
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1024
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error?.message || 'Lỗi kết nối Gemini API. Hãy kiểm tra lại API Key!');
         }
-        hist.innerHTML += `<div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300 max-w-[85%]">🤖 ${reply}</div>`;
+
+        const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!aiReply) throw new Error('AI không trả về nội dung.');
+
+        coachMessages.push({ role: 'model', text: aiReply });
+        localStorage.setItem(KEY_COACH_CHAT, JSON.stringify(coachMessages.slice(-30)));
+        renderCoachChat();
+      } catch (err) {
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+        hist.innerHTML += `
+          <div class="bg-rose-950/50 p-2.5 rounded-2xl border border-rose-500/50 text-xs text-rose-200 max-w-[92%]">
+            ⚠️ <b>Không kết nối được Gemini AI:</b> ${escapeHtml(err.message)}
+          </div>
+        `;
         hist.scrollTop = hist.scrollHeight;
-      }, 450);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerText = 'Gửi';
+      }
     }
 
     function exportJSONData() {
