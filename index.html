@@ -303,34 +303,56 @@
 
       <!-- ============ SUB-MODE A: NHẬP BỮA ĂN BẰNG TAY + QUY ĐỔI KHỐI LƯỢNG ============ -->
       <div id="mode-manual-panel" class="space-y-3">
-        <!-- Search & Autocomplete Box -->
+        <!-- Search, Category Browser & AI Lookup Box -->
         <div class="bg-slate-900 rounded-2xl p-3.5 border border-slate-800 space-y-2.5">
-          <div>
-            <label class="text-[10px] text-slate-400 font-bold uppercase">1. Chọn hoặc gõ tên món ăn:</label>
-            <div class="relative mt-1">
-              <input type="text" id="manual-food-input" oninput="filterFoodSuggestions()" onfocus="filterFoodSuggestions()" placeholder="VD: ức gà, cơm trắng, phở bò, trứng, chuối..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500">
-              <button onclick="clearManualFood()" id="manual-clear-btn" class="hidden absolute right-2.5 top-2.5 text-slate-400 text-xs px-1">✕</button>
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-slate-400 font-bold uppercase">1. Tìm hoặc chọn món ăn:</label>
+            <span id="food-db-count-badge" class="text-[9px] text-emerald-400 font-bold bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-800/50">230+ món & AI</span>
+          </div>
+
+          <!-- Search Input + AI Lookup Button -->
+          <div class="flex gap-1.5">
+            <div class="relative flex-1">
+              <input type="text" id="manual-food-input" oninput="onManualSearchInput()" placeholder="Gõ tên món (VD: thịt kho, vịt quay, trà đào...)" class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-3 pr-7 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500">
+              <button onclick="clearManualFood()" id="manual-clear-btn" class="hidden absolute right-2 top-2.5 text-slate-400 text-xs px-1">✕</button>
+            </div>
+            <button onclick="lookupFoodWithAI()" id="btn-ai-lookup" class="px-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black rounded-xl text-[11px] shrink-0 active:scale-95 transition flex items-center gap-1 shadow-md shadow-violet-500/20">
+              ✨ AI Tra
+            </button>
+          </div>
+
+          <!-- Inline Gemini Key Prompt (only shown if user clicks AI Tra without a key) -->
+          <div id="manual-ai-key-prompt" class="hidden bg-slate-950 border border-violet-500/50 rounded-xl p-2.5 space-y-2">
+            <p class="text-[10px] text-violet-300 font-bold">🔑 Để AI tự tra bất kỳ món lạ nào, bạn dán Gemini API Key miễn phí vào đây (chỉ cần nhập 1 lần):</p>
+            <div class="flex gap-1.5">
+              <input type="password" id="manual-inline-key-input" placeholder="Dán mã AIzaSy... vào đây" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              <button onclick="saveInlineGeminiKey()" class="px-3 py-1.5 bg-emerald-500 text-slate-950 font-bold rounded-lg text-xs">Lưu</button>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <a href="https://aistudio.google.com/apikey" target="_blank" class="text-sky-400 underline font-semibold">👉 Bấm lấy Key miễn phí tại Google AI Studio ↗</a>
+              <button onclick="document.getElementById('manual-ai-key-prompt').classList.add('hidden')" class="text-slate-500">Đóng</button>
             </div>
           </div>
 
-          <!-- Autocomplete Dropdown Results -->
-          <div id="manual-suggestions" class="hidden max-h-44 overflow-y-auto no-scrollbar space-y-1 bg-slate-950 border border-slate-800 rounded-xl p-1.5">
+          <!-- AI Lookup Status / Result Note -->
+          <div id="manual-ai-status" class="hidden rounded-xl p-2 text-[11px] flex items-center gap-2"></div>
+
+          <!-- Horizontal Category Filter Pills -->
+          <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-[10px] font-bold">
+            <button onclick="setFoodCategory('saved')" id="cat-btn-saved" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-amber-300">⭐ Của tôi</button>
+            <button onclick="setFoodCategory('all')" id="cat-btn-all" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-emerald-500 text-slate-950">🔥 Tất cả</button>
+            <button onclick="setFoodCategory('man')" id="cat-btn-man" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🍖 Cơm nhà</button>
+            <button onclick="setFoodCategory('nuoc')" id="cat-btn-nuoc" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🍜 Bún/Phở/Quán</button>
+            <button onclick="setFoodCategory('com')" id="cat-btn-com" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🍚 Cơm/Tinh bột</button>
+            <button onclick="setFoodCategory('thit')" id="cat-btn-thit" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🍗 Đạm/Gym</button>
+            <button onclick="setFoodCategory('rau')" id="cat-btn-rau" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🥬 Rau/Canh</button>
+            <button onclick="setFoodCategory('trai')" id="cat-btn-trai" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">🍎 Trái cây</button>
+            <button onclick="setFoodCategory('uong')" id="cat-btn-uong" class="cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300">☕ Uống/Ăn vặt</button>
+          </div>
+
+          <!-- Browsable Food List -->
+          <div id="manual-food-browser" class="max-h-48 overflow-y-auto no-scrollbar space-y-1 bg-slate-950/90 border border-slate-800 rounded-xl p-1.5">
             <!-- Populated dynamically -->
-          </div>
-
-          <!-- Quick Popular Food Chips -->
-          <div>
-            <span class="text-[10px] text-slate-500 font-semibold block mb-1.5">Chọn nhanh món phổ biến:</span>
-            <div class="flex flex-wrap gap-1.5 text-[10px]">
-              <button onclick="pickManualFoodByName('Cơm trắng')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🍚 Cơm trắng</button>
-              <button onclick="pickManualFoodByName('Ức gà luộc / áp chảo')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🍗 Ức gà</button>
-              <button onclick="pickManualFoodByName('Trứng gà luộc')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🥚 Trứng luộc</button>
-              <button onclick="pickManualFoodByName('Phở bò tái nạm')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🍜 Phở bò</button>
-              <button onclick="pickManualFoodByName('Cơm tấm sườn bì chả')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🍖 Cơm tấm</button>
-              <button onclick="pickManualFoodByName('Bánh mì thịt trứng pate')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🥖 Bánh mì</button>
-              <button onclick="pickManualFoodByName('Thịt bò nạc')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🥩 Thịt bò</button>
-              <button onclick="pickManualFoodByName('Rau luộc tổng hợp')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500">🥬 Rau luộc</button>
-            </div>
           </div>
         </div>
 
@@ -791,59 +813,262 @@
   </nav>
 
   <script>
-    // Comprehensive Food Nutrition Database (All values per 100g or 100ml)
-    const FOOD_DB_100G = [
-      // Tinh bột & Cơm
-      { name: 'Cơm trắng', unit: 'gram', defaultW: 150, cal100: 130, p100: 2.7, c100: 28, f100: 0.3, presets: [{l:'100g',w:100},{l:'1 bát (150g)',w:150},{l:'2 bát (300g)',w:300}] },
-      { name: 'Cơm gạo lứt', unit: 'gram', defaultW: 150, cal100: 111, p100: 2.6, c100: 23, f100: 0.9, presets: [{l:'100g',w:100},{l:'1 bát (150g)',w:150},{l:'200g',w:200}] },
-      { name: 'Khoai lang luộc', unit: 'gram', defaultW: 150, cal100: 86, p100: 1.6, c100: 20, f100: 0.1, presets: [{l:'1 củ nhỏ (100g)',w:100},{l:'1 củ vừa (150g)',w:150},{l:'200g',w:200}] },
-      { name: 'Bún tươi', unit: 'gram', defaultW: 150, cal100: 110, p100: 1.7, c100: 25, f100: 0.2, presets: [{l:'100g',w:100},{l:'1 bát (150g)',w:150},{l:'200g',w:200}] },
-      { name: 'Bánh mì trắng (không nhân)', unit: 'gram', defaultW: 90, cal100: 265, p100: 9, c100: 49, f100: 3.2, presets: [{l:'1 lát (30g)',w:30},{l:'1 ổ (90g)',w:90}] },
-      { name: 'Yến mạch khô', unit: 'gram', defaultW: 50, cal100: 389, p100: 17, c100: 66, f100: 7, presets: [{l:'40g',w:40},{l:'50g',w:50},{l:'80g',w:80}] },
+    // Comprehensive Vietnamese & Everyday Food Database (225+ items, values per 100g or 100ml)
+    // Format: [name, cat, unit, defaultW, cal100, p100, c100, f100, customPresets?]
+    const RAW_FOOD_DB = [
+      // === CƠM & TINH BỘT (com) ===
+      ['Cơm trắng', 'com', 'gram', 150, 130, 2.7, 28, 0.3, [['100g',100],['1 bát (150g)',150],['2 bát (300g)',300]]],
+      ['Cơm gạo lứt', 'com', 'gram', 150, 111, 2.6, 23, 0.9, [['100g',100],['1 bát (150g)',150],['200g',200]]],
+      ['Cơm nếp (xôi trắng)', 'com', 'gram', 150, 169, 3.5, 37, 0.3, [['100g',100],['1 nắm (150g)',150]]],
+      ['Cơm cháy chà bông', 'com', 'gram', 50, 420, 9, 68, 12, [['1 miếng (50g)',50],['100g',100]]],
+      ['Khoai lang luộc / nướng', 'com', 'gram', 150, 86, 1.6, 20, 0.1, [['1 củ nhỏ (100g)',100],['1 củ vừa (150g)',150],['250g',250]]],
+      ['Khoai tây luộc', 'com', 'gram', 150, 87, 1.9, 20, 0.1],
+      ['Khoai tây chiên', 'com', 'gram', 100, 312, 3.4, 41, 15, [['Phần nhỏ (80g)',80],['Phần vừa (120g)',120]]],
+      ['Ngô (bắp) luộc', 'com', 'gram', 150, 96, 3.4, 21, 1.5, [['1 trái vừa (150g)',150]]],
+      ['Bún tươi', 'com', 'gram', 150, 110, 1.7, 25, 0.2, [['100g',100],['1 bát (150g)',150],['200g',200]]],
+      ['Bánh phở tươi', 'com', 'gram', 150, 140, 2.5, 31, 0.4],
+      ['Miến dong luộc', 'com', 'gram', 150, 108, 0.2, 26, 0.1],
+      ['Mì trứng luộc', 'com', 'gram', 150, 138, 4.5, 25, 2],
+      ['Mì Ý (Pasta) luộc', 'com', 'gram', 150, 158, 5.8, 31, 0.9],
+      ['Bánh mì trắng (không nhân)', 'com', 'gram', 90, 265, 9, 49, 3.2, [['1 lát (30g)',30],['1 ổ (90g)',90]]],
+      ['Bánh mì nguyên cám / đen', 'com', 'gram', 60, 247, 13, 41, 3.4, [['1 lát (35g)',35],['2 lát (70g)',70]]],
+      ['Bánh mì sandwich trắng', 'com', 'gram', 60, 266, 8, 50, 3.3, [['1 lát (30g)',30],['2 lát (60g)',60]]],
+      ['Yến mạch khô', 'com', 'gram', 50, 389, 17, 66, 7, [['40g',40],['50g',50],['80g',80]]],
+      ['Hạt Quinoa (diêm mạch) chín', 'com', 'gram', 150, 120, 4.4, 21, 1.9],
+      ['Bánh chưng', 'com', 'gram', 150, 200, 6.5, 34, 4.5, [['1 góc 1/8 (125g)',125],['1 góc 1/4 (250g)',250]]],
+      ['Bánh tét nhân đậu thịt', 'com', 'gram', 150, 210, 6.8, 35, 5, [['1 khoanh (120g)',120]]],
+      ['Bánh giò nhân thịt', 'com', 'gram', 200, 165, 5.5, 22, 6, [['1 cái (200g)',200]]],
+      ['Xôi xéo đậu xanh hành phi', 'com', 'gram', 200, 225, 7, 35, 6.5, [['Gói nhỏ (150g)',150],['Gói chuẩn (220g)',220]]],
+      ['Xôi gấc', 'com', 'gram', 180, 195, 3.8, 38, 3],
+      ['Xôi mặn / Xôi gà', 'com', 'gram', 230, 230, 9.5, 31, 7.5, [['1 hộp (230g)',230]]],
+      ['Cháo trắng', 'com', 'gram', 250, 45, 0.9, 10, 0.1, [['1 bát (250g)',250]]],
 
-      // Đạm (Thịt, Cá, Trứng, Đậu)
-      { name: 'Ức gà luộc / áp chảo', unit: 'gram', defaultW: 150, cal100: 165, p100: 31, c100: 0, f100: 3.6, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200},{l:'250g',w:250}] },
-      { name: 'Thịt heo nạc (thăn)', unit: 'gram', defaultW: 150, cal100: 143, p100: 21, c100: 0, f100: 6, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200}] },
-      { name: 'Thịt ba chỉ heo', unit: 'gram', defaultW: 100, cal100: 395, p100: 14, c100: 0, f100: 37, presets: [{l:'50g',w:50},{l:'100g',w:100},{l:'150g',w:150}] },
-      { name: 'Thịt bò nạc', unit: 'gram', defaultW: 150, cal100: 180, p100: 26, c100: 0, f100: 8, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200}] },
-      { name: 'Cá hồi áp chảo', unit: 'gram', defaultW: 150, cal100: 208, p100: 20, c100: 0, f100: 13, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200}] },
-      { name: 'Cá thu / Cá basa / Cá rô phi', unit: 'gram', defaultW: 150, cal100: 155, p100: 20, c100: 0, f100: 8, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200}] },
-      { name: 'Tôm hấp / luộc', unit: 'gram', defaultW: 150, cal100: 99, p100: 24, c100: 0.2, f100: 0.3, presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200}] },
-      { name: 'Trứng gà luộc', unit: 'gram', defaultW: 100, cal100: 155, p100: 13, c100: 1.1, f100: 11, presets: [{l:'1 quả (50g)',w:50},{l:'2 quả (100g)',w:100},{l:'3 quả (150g)',w:150}] },
-      { name: 'Trứng gà ốp la / chiên', unit: 'gram', defaultW: 110, cal100: 196, p100: 14, c100: 1, f100: 15, presets: [{l:'1 quả (55g)',w:55},{l:'2 quả (110g)',w:110}] },
-      { name: 'Đậu hũ (đậu phụ) trắng', unit: 'gram', defaultW: 120, cal100: 76, p100: 8, c100: 1.9, f100: 4.8, presets: [{l:'1 bìa (120g)',w:120},{l:'2 bìa (240g)',w:240}] },
-      { name: 'Chả lụa (giò lụa)', unit: 'gram', defaultW: 100, cal100: 230, p100: 21, c100: 3, f100: 15, presets: [{l:'50g',w:50},{l:'100g',w:100}] },
+      // === MÓN MẶN CƠM GIA ĐÌNH (man) ===
+      ['Thịt kho tàu (kho trứng)', 'man', 'gram', 150, 235, 14, 4, 18, [['100g',100],['150g',150],['200g',200]]],
+      ['Thịt kho tiêu', 'man', 'gram', 120, 220, 18, 5, 14],
+      ['Thịt ba chỉ rang cháy cạnh', 'man', 'gram', 120, 340, 15, 3, 30],
+      ['Sườn xào chua ngọt', 'man', 'gram', 150, 250, 16, 12, 15],
+      ['Sườn heo nướng mật ong', 'man', 'gram', 150, 275, 20, 8, 18],
+      ['Thịt heo luộc (nạc vai)', 'man', 'gram', 150, 195, 24, 0, 11],
+      ['Thịt ba chỉ luộc', 'man', 'gram', 120, 360, 14, 0, 34],
+      ['Thịt heo quay giòn bì', 'man', 'gram', 150, 355, 18, 1, 31],
+      ['Thịt băm rang nước mắm', 'man', 'gram', 100, 230, 19, 3, 16],
+      ['Chả lá lốt chiên', 'man', 'gram', 120, 245, 15, 6, 18, [['3 cuốn (90g)',90],['5 cuốn (150g)',150]]],
+      ['Nem rán (chả giò)', 'man', 'gram', 120, 260, 10, 18, 16, [['2 cuốn (80g)',80],['4 cuốn (160g)',160]]],
+      ['Cá kho tộ (cá basa / cá lóc)', 'man', 'gram', 150, 185, 19, 5, 10],
+      ['Cá nục kho cà chua', 'man', 'gram', 150, 165, 20, 4, 7.5],
+      ['Cá chiên giòn / sốt mắm', 'man', 'gram', 150, 235, 21, 5, 14],
+      ['Cá hấp gừng hành', 'man', 'gram', 150, 125, 22, 1, 3.5],
+      ['Cá thu sốt cà chua', 'man', 'gram', 150, 190, 21, 4, 10],
+      ['Gà kho gừng / kho sả ớt', 'man', 'gram', 150, 185, 22, 4, 9],
+      ['Gà ta luộc (có da)', 'man', 'gram', 150, 215, 24, 0, 13],
+      ['Đùi gà nướng mật ong', 'man', 'gram', 150, 230, 23, 6, 12],
+      ['Cánh gà chiên nước mắm', 'man', 'gram', 120, 290, 20, 8, 20, [['2 cánh (100g)',100],['4 cánh (200g)',200]]],
+      ['Gà rán giòn (kiểu KFC)', 'man', 'gram', 130, 285, 19, 13, 17, [['1 miếng (130g)',130],['2 miếng (260g)',260]]],
+      ['Vịt luộc', 'man', 'gram', 150, 260, 19, 0, 20],
+      ['Vịt quay Bắc Kinh / quay lá mắc mật', 'man', 'gram', 150, 320, 19, 4, 25],
+      ['Thịt bò xào hành tây / cần tỏi', 'man', 'gram', 150, 170, 18, 6, 8],
+      ['Thịt bò xào thiên lý / bông cải', 'man', 'gram', 180, 145, 16, 6, 6.5],
+      ['Bò lúc lắc', 'man', 'gram', 150, 210, 22, 5, 11],
+      ['Bò kho (ăn với bánh mì / cơm)', 'man', 'gram', 200, 165, 15, 7, 8.5],
+      ['Bò bít tết (Steak)', 'man', 'gram', 180, 240, 26, 1, 15],
+      ['Đậu hũ sốt cà chua', 'man', 'gram', 150, 120, 8, 6, 7.5],
+      ['Đậu hũ nhồi thịt sốt cà', 'man', 'gram', 150, 160, 12, 5, 10],
+      ['Đậu hũ chiên giòn / sả ớt', 'man', 'gram', 120, 210, 11, 4, 17],
+      ['Trứng chiên thịt băm', 'man', 'gram', 120, 225, 16, 2, 17],
+      ['Trứng cuộn hành lá', 'man', 'gram', 100, 185, 12, 2, 14],
+      ['Trứng vịt lộn', 'man', 'gram', 70, 182, 13.6, 4, 12.4, [['1 quả (70g)',70],['2 quả (140g)',140]]],
+      ['Trứng cút lộn xào me', 'man', 'gram', 120, 195, 12, 10, 12],
+      ['Tôm rim mặn ngọt', 'man', 'gram', 120, 155, 22, 6, 4.5],
+      ['Mực xào dứa / cần tỏi', 'man', 'gram', 150, 125, 16, 6, 4],
+      ['Chả cá Lã Vọng / Chả cá chiên', 'man', 'gram', 120, 215, 17, 7, 13],
+      ['Chả mực Hạ Long', 'man', 'gram', 100, 220, 18, 6, 14],
+      ['Chả lụa (giò lụa)', 'man', 'gram', 100, 230, 21, 3, 15, [['50g',50],['100g',100]]],
+      ['Giò thủ (giò xào)', 'man', 'gram', 100, 290, 17, 2, 24],
+      ['Lạp xưởng chiên', 'man', 'gram', 60, 410, 15, 16, 32, [['1 cây (50g)',50]]],
+      ['Xúc xích heo / tiệt trùng', 'man', 'gram', 60, 295, 12, 8, 24, [['1 cây (40g)',40],['2 cây (80g)',80]]],
+      ['Lòng heo luộc (dồi, gan, tim)', 'man', 'gram', 150, 195, 17, 3, 12],
+      ['Thịt đông', 'man', 'gram', 150, 175, 16, 2, 11],
+      ['Ruốc thịt heo (chà bông)', 'man', 'gram', 30, 395, 52, 12, 15, [['20g',20],['30g',30]]],
 
-      // Món Việt phổ biến
-      { name: 'Phở bò tái nạm', unit: 'gram', defaultW: 420, cal100: 115, p100: 6.8, c100: 14.5, f100: 2.8, presets: [{l:'Tô nhỏ (320g)',w:320},{l:'Tô vừa (420g)',w:420},{l:'Tô đặc biệt (550g)',w:550}] },
-      { name: 'Phở gà', unit: 'gram', defaultW: 400, cal100: 108, p100: 6.5, c100: 14, f100: 2.5, presets: [{l:'Tô vừa (400g)',w:400},{l:'Tô lớn (500g)',w:500}] },
-      { name: 'Cơm tấm sườn bì chả', unit: 'gram', defaultW: 350, cal100: 195, p100: 9, c100: 22, f100: 7.5, presets: [{l:'Nửa đĩa (180g)',w:180},{l:'1 đĩa chuẩn (350g)',w:350},{l:'Đĩa thêm cơm (450g)',w:450}] },
-      { name: 'Bún chả Hà Nội', unit: 'gram', defaultW: 350, cal100: 157, p100: 7.5, c100: 18.5, f100: 5.2, presets: [{l:'1 suất vừa (350g)',w:350},{l:'1 suất nhiều thịt (450g)',w:450}] },
-      { name: 'Bún bò Huế', unit: 'gram', defaultW: 450, cal100: 124, p100: 6.7, c100: 13.8, f100: 4, presets: [{l:'Tô vừa (450g)',w:450},{l:'Tô đặc biệt (580g)',w:580}] },
-      { name: 'Bánh mì thịt trứng pate', unit: 'gram', defaultW: 180, cal100: 235, p100: 10, c100: 28, f100: 9, presets: [{l:'Nửa ổ (90g)',w:90},{l:'1 ổ chuẩn (180g)',w:180}] },
-      { name: 'Hủ tiếu Nam Vang', unit: 'gram', defaultW: 420, cal100: 121, p100: 5.8, c100: 15.7, f100: 3.5, presets: [{l:'1 tô (420g)',w:420}] },
-      { name: 'Xôi gà / Xôi xéo', unit: 'gram', defaultW: 230, cal100: 220, p100: 8.5, c100: 31, f100: 6.5, presets: [{l:'Gói nhỏ (150g)',w:150},{l:'Gói chuẩn (230g)',w:230}] },
-      { name: 'Cơm rang dưa bò / thập cẩm', unit: 'gram', defaultW: 320, cal100: 185, p100: 7, c100: 25, f100: 6.5, presets: [{l:'Nửa đĩa (160g)',w:160},{l:'1 đĩa (320g)',w:320}] },
-      { name: 'Gỏi cuốn tôm thịt', unit: 'gram', defaultW: 140, cal100: 110, p100: 6, c100: 16, f100: 2, presets: [{l:'1 cuốn (70g)',w:70},{l:'2 cuốn (140g)',w:140},{l:'3 cuốn (210g)',w:210}] },
-      { name: 'Canh rau nấu thịt băm', unit: 'gram', defaultW: 250, cal100: 48, p100: 3.8, c100: 2.5, f100: 2, presets: [{l:'1 bát (250g)',w:250}] },
-      { name: 'Salad cá hồi & quả bơ', unit: 'gram', defaultW: 300, cal100: 160, p100: 11, c100: 6, f100: 8, presets: [{l:'1 phần (300g)',w:300}] },
+      // === NGUYÊN LIỆU ĐẠM / GYM / EAT CLEAN (thit) ===
+      ['Ức gà luộc / áp chảo', 'thit', 'gram', 150, 165, 31, 0, 3.6, [['100g',100],['150g',150],['200g',200],['250g',250]]],
+      ['Đùi gà lọc xương bỏ da', 'thit', 'gram', 150, 175, 25, 0, 8],
+      ['Thịt thăn heo nạc', 'thit', 'gram', 150, 143, 21, 0, 6],
+      ['Thịt ba chỉ heo tươi', 'thit', 'gram', 100, 395, 14, 0, 37],
+      ['Thịt bò thăn nạc', 'thit', 'gram', 150, 180, 26, 0, 8],
+      ['Bắp bò luộc', 'thit', 'gram', 150, 170, 27, 0, 6.5],
+      ['Cá hồi áp chảo / sashimi', 'thit', 'gram', 150, 208, 20, 0, 13],
+      ['Cá ngừ đại dương / đóng hộp ngâm nước', 'thit', 'gram', 120, 116, 26, 0, 1],
+      ['Cá basa / cá tra phi lê', 'thit', 'gram', 150, 150, 17, 0, 9],
+      ['Cá rô phi phi lê', 'thit', 'gram', 150, 128, 26, 0, 2.7],
+      ['Cá thu tươi hấp / nướng', 'thit', 'gram', 150, 195, 21, 0, 12],
+      ['Tôm sú hấp / luộc', 'thit', 'gram', 150, 99, 24, 0.2, 0.3],
+      ['Mực tươi hấp / luộc', 'thit', 'gram', 150, 92, 16, 3, 1.4],
+      ['Bạch tuộc luộc / nướng', 'thit', 'gram', 150, 82, 15, 2.2, 1],
+      ['Nghêu / Sò / Hàu hấp', 'thit', 'gram', 150, 80, 13, 3.5, 1.5],
+      ['Trứng gà luộc', 'thit', 'gram', 100, 155, 13, 1.1, 11, [['1 quả (50g)',50],['2 quả (100g)',100],['3 quả (150g)',150]]],
+      ['Trứng gà ốp la / chiên', 'thit', 'gram', 110, 196, 14, 1, 15, [['1 quả (55g)',55],['2 quả (110g)',110]]],
+      ['Lòng trắng trứng gà', 'thit', 'gram', 100, 52, 11, 0.7, 0.2, [['2 lòng trắng (65g)',65],['4 lòng trắng (130g)',130]]],
+      ['Đậu hũ (đậu phụ) trắng', 'thit', 'gram', 120, 76, 8, 1.9, 4.8, [['1 bìa (120g)',120],['2 bìa (240g)',240]]],
+      ['Đậu nành lông (Edamame) luộc', 'thit', 'gram', 100, 121, 12, 9, 5],
+      ['Sườn cốt lết heo nạc áp chảo', 'thit', 'gram', 150, 190, 25, 0, 9.5],
 
-      // Rau củ & Trái cây
-      { name: 'Rau luộc tổng hợp', unit: 'gram', defaultW: 150, cal100: 30, p100: 2.5, c100: 5, f100: 0.3, presets: [{l:'100g',w:100},{l:'1 đĩa (150g)',w:150},{l:'250g',w:250}] },
-      { name: 'Chuối chín', unit: 'gram', defaultW: 100, cal100: 89, p100: 1.1, c100: 23, f100: 0.3, presets: [{l:'1 quả (100g)',w:100},{l:'2 quả (200g)',w:200}] },
-      { name: 'Táo tươi', unit: 'gram', defaultW: 150, cal100: 52, p100: 0.3, c100: 14, f100: 0.2, presets: [{l:'1 quả (150g)',w:150}] },
-      { name: 'Quả bơ sáp', unit: 'gram', defaultW: 100, cal100: 160, p100: 2, c100: 9, f100: 15, presets: [{l:'Nửa quả (100g)',w:100},{l:'1 quả (200g)',w:200}] },
-      { name: 'Dưa hấu', unit: 'gram', defaultW: 200, cal100: 30, p100: 0.6, c100: 7.6, f100: 0.2, presets: [{l:'200g',w:200},{l:'300g',w:300}] },
+      // === BÚN, PHỞ, BÁNH, ĐỒ QUÁN (nuoc) ===
+      ['Phở bò tái nạm', 'nuoc', 'gram', 420, 115, 6.8, 14.5, 2.8, [['Tô nhỏ (320g)',320],['Tô vừa (420g)',420],['Đặc biệt (550g)',550]]],
+      ['Phở bò chín / tái chín', 'nuoc', 'gram', 420, 112, 6.5, 14.5, 2.5, [['Tô vừa (420g)',420]]],
+      ['Phở gà', 'nuoc', 'gram', 400, 108, 6.5, 14, 2.5, [['Tô vừa (400g)',400],['Tô lớn (500g)',500]]],
+      ['Phở cuốn thịt bò', 'nuoc', 'gram', 200, 130, 6.5, 18, 3.5, [['3 cuốn (150g)',150],['5 cuốn (250g)',250]]],
+      ['Bún chả Hà Nội', 'nuoc', 'gram', 350, 157, 7.5, 18.5, 5.2, [['1 suất vừa (350g)',350],['Suất lớn (450g)',450]]],
+      ['Bún bò Huế', 'nuoc', 'gram', 450, 124, 6.7, 13.8, 4, [['Tô vừa (450g)',450],['Đặc biệt (580g)',580]]],
+      ['Bún riêu cua ốc đậu', 'nuoc', 'gram', 420, 110, 5.8, 13.5, 3.5, [['1 tô (420g)',420]]],
+      ['Bún đậu mắm tôm (đầy đủ)', 'nuoc', 'gram', 400, 175, 8.5, 18, 7.5, [['1 mẹt vừa (400g)',400],['Mẹt lớn (550g)',550]]],
+      ['Bún thịt nướng chả giò', 'nuoc', 'gram', 380, 155, 7.2, 20, 5, [['1 tô (380g)',380]]],
+      ['Bún cá / Bún chả cá', 'nuoc', 'gram', 420, 112, 6.5, 14.5, 3, [['1 tô (420g)',420]]],
+      ['Bún ốc Hà Nội', 'nuoc', 'gram', 400, 98, 5.5, 14, 2, [['1 tô (400g)',400]]],
+      ['Bún thang', 'nuoc', 'gram', 400, 105, 6.5, 13.5, 2.5, [['1 tô (400g)',400]]],
+      ['Bún mắm miền Tây', 'nuoc', 'gram', 450, 125, 7, 14, 4.2, [['1 tô (450g)',450]]],
+      ['Hủ tiếu Nam Vang', 'nuoc', 'gram', 420, 121, 5.8, 15.7, 3.5, [['1 tô (420g)',420]]],
+      ['Hủ tiếu gõ / thịt băm', 'nuoc', 'gram', 380, 110, 5, 15.5, 3, [['1 tô (380g)',380]]],
+      ['Mì Quảng gà / tôm thịt', 'nuoc', 'gram', 380, 142, 7.2, 17, 5, [['1 tô (380g)',380]]],
+      ['Cao lầu Hội An', 'nuoc', 'gram', 350, 150, 7, 20, 4.5, [['1 tô (350g)',350]]],
+      ['Miến gà / Miến ngan', 'nuoc', 'gram', 380, 102, 6.8, 13, 2.3, [['1 tô (380g)',380]]],
+      ['Miến lươn nước / trộn', 'nuoc', 'gram', 350, 128, 7.5, 15, 4, [['1 tô (350g)',350]]],
+      ['Mì tôm ăn liền (không trứng)', 'nuoc', 'gram', 75, 450, 9, 60, 18, [['1 gói khô (75g)',75]]],
+      ['Mì tôm nấu trứng + thịt bò', 'nuoc', 'gram', 400, 135, 6.5, 14, 5.8, [['1 tô (400g)',400]]],
+      ['Mì xào bò rau cải', 'nuoc', 'gram', 320, 175, 8.5, 21, 6.5, [['1 đĩa (320g)',320]]],
+      ['Mì Ý sốt bò bằm (Spaghetti)', 'nuoc', 'gram', 320, 160, 7.5, 20, 5.5, [['1 đĩa (320g)',320]]],
+      ['Cơm tấm sườn bì chả', 'nuoc', 'gram', 350, 195, 9, 22, 7.5, [['Nửa đĩa (180g)',180],['1 đĩa chuẩn (350g)',350],['Đĩa lớn (450g)',450]]],
+      ['Cơm gà xối mỡ', 'nuoc', 'gram', 380, 205, 10, 23, 8, [['1 đĩa (380g)',380]]],
+      ['Cơm gà Hải Nam / Hội An', 'nuoc', 'gram', 350, 175, 10.5, 22, 5, [['1 đĩa (350g)',350]]],
+      ['Cơm rang thập cẩm / Dương Châu', 'nuoc', 'gram', 320, 185, 7, 25, 6.5, [['Nửa đĩa (160g)',160],['1 đĩa (320g)',320]]],
+      ['Cơm rang dưa bò', 'nuoc', 'gram', 350, 190, 9, 23, 7, [['1 đĩa (350g)',350]]],
+      ['Bánh mì thịt trứng pate', 'nuoc', 'gram', 180, 235, 10, 28, 9, [['Nửa ổ (90g)',90],['1 ổ chuẩn (180g)',180]]],
+      ['Bánh mì ốp la (2 trứng)', 'nuoc', 'gram', 180, 220, 11, 24, 9, [['1 ổ (180g)',180]]],
+      ['Bánh mì chả lụa', 'nuoc', 'gram', 160, 225, 9.5, 28, 8, [['1 ổ (160g)',160]]],
+      ['Bánh cuốn nóng chả lụa', 'nuoc', 'gram', 280, 145, 6, 22, 3.8, [['1 đĩa (280g)',280]]],
+      ['Bánh xèo tôm thịt', 'nuoc', 'gram', 220, 210, 7.5, 22, 10.5, [['1 cái (220g)',220]]],
+      ['Bánh bao nhân thịt trứng cút', 'nuoc', 'gram', 150, 220, 8, 32, 6.5, [['1 cái (150g)',150]]],
+      ['Gỏi cuốn tôm thịt', 'nuoc', 'gram', 140, 110, 6, 16, 2, [['1 cuốn (70g)',70],['2 cuốn (140g)',140],['3 cuốn (210g)',210]]],
+      ['Cháo gà / Cháo thịt băm', 'nuoc', 'gram', 350, 82, 5.5, 11, 1.8, [['1 tô (350g)',350]]],
+      ['Cháo lòng', 'nuoc', 'gram', 380, 105, 6.5, 11, 3.8, [['1 tô (380g)',380]]],
+      ['Pizza phô mai / hải sản', 'nuoc', 'gram', 120, 265, 11, 33, 10, [['1 miếng (110g)',110],['2 miếng (220g)',220]]],
+      ['Hamburger bò phô mai', 'nuoc', 'gram', 200, 260, 13, 25, 12, [['1 cái (200g)',200]]],
+      ['Sushi / Kimbap cuộn', 'nuoc', 'gram', 180, 155, 6, 26, 3, [['6 miếng (180g)',180]]],
 
-      // Sữa & Đồ uống
-      { name: 'Sữa tươi không đường', unit: 'ml', defaultW: 180, cal100: 60, p100: 3.2, c100: 4.8, f100: 3.2, presets: [{l:'1 hộp (180ml)',w:180},{l:'250ml',w:250}] },
-      { name: 'Sữa chua Hy Lạp không đường', unit: 'gram', defaultW: 100, cal100: 73, p100: 10, c100: 4, f100: 1.5, presets: [{l:'1 hộp (100g)',w:100},{l:'150g',w:150}] },
-      { name: 'Sữa chua có đường', unit: 'gram', defaultW: 100, cal100: 100, p100: 3.5, c100: 15, f100: 2.8, presets: [{l:'1 hộp (100g)',w:100}] },
-      { name: 'Whey Protein (bột đạm)', unit: 'gram', defaultW: 30, cal100: 400, p100: 80, c100: 7, f100: 4, presets: [{l:'1 muỗng (30g)',w:30},{l:'2 muỗng (60g)',w:60}] },
-      { name: 'Cà phê sữa đá', unit: 'ml', defaultW: 200, cal100: 95, p100: 2.5, c100: 14, f100: 3, presets: [{l:'1 ly (200ml)',w:200}] },
-      { name: 'Trà sữa trân châu', unit: 'ml', defaultW: 400, cal100: 110, p100: 1.5, c100: 18, f100: 3.5, presets: [{l:'Size M (350ml)',w:350},{l:'Size L (500ml)',w:500}] },
-      { name: 'Bia lon', unit: 'ml', defaultW: 330, cal100: 43, p100: 0.5, c100: 3.5, f100: 0, presets: [{l:'1 lon (330ml)',w:330},{l:'2 lon (660ml)',w:660}] },
+      // === RAU CỦ & CANH (rau) ===
+      ['Rau luộc tổng hợp (cải, bầu, bí)', 'rau', 'gram', 150, 30, 2.5, 5, 0.3, [['100g',100],['1 đĩa (150g)',150],['250g',250]]],
+      ['Rau muống luộc', 'rau', 'gram', 150, 25, 2.6, 3.5, 0.2],
+      ['Rau muống xào tỏi', 'rau', 'gram', 150, 85, 2.5, 5, 6.5],
+      ['Bông cải xanh (súp lơ) luộc', 'rau', 'gram', 150, 35, 2.4, 7.2, 0.4],
+      ['Cải thìa xào nấm / dầu hào', 'rau', 'gram', 150, 65, 2.2, 4.5, 4.5],
+      ['Su su / Đậu que xào tỏi', 'rau', 'gram', 150, 75, 2, 7, 4.5],
+      ['Bí đỏ luộc / hấp', 'rau', 'gram', 150, 35, 1, 8, 0.1],
+      ['Cà rốt luộc', 'rau', 'gram', 100, 35, 0.8, 8.2, 0.2],
+      ['Dưa leo (dưa chuột)', 'rau', 'gram', 150, 15, 0.7, 3.6, 0.1],
+      ['Cà chua tươi', 'rau', 'gram', 100, 18, 0.9, 3.9, 0.2],
+      ['Xà lách tươi', 'rau', 'gram', 100, 15, 1.4, 2.9, 0.2],
+      ['Đậu bắp luộc', 'rau', 'gram', 100, 33, 1.9, 7.5, 0.2],
+      ['Giá đỗ xào', 'rau', 'gram', 150, 70, 3.5, 6, 3.8],
+      ['Cà tím nướng mỡ hành', 'rau', 'gram', 150, 95, 1.5, 8, 6.5],
+      ['Nấm đùi gà / kim châm áp chảo', 'rau', 'gram', 150, 55, 3, 6, 2],
+      ['Dưa cải muối chua', 'rau', 'gram', 100, 25, 1.5, 4.5, 0.2],
+      ['Kim chi cải thảo', 'rau', 'gram', 100, 23, 1.7, 4, 0.5],
+      ['Salad rau trộn dầu giấm', 'rau', 'gram', 200, 68, 1.8, 6, 4.2],
+      ['Salad ức gà rau củ', 'rau', 'gram', 280, 125, 14, 6, 4.8, [['1 hộp (280g)',280]]],
+      ['Salad cá hồi & quả bơ', 'rau', 'gram', 300, 160, 11, 6, 8, [['1 phần (300g)',300]]],
+      ['Canh chua cá lóc', 'rau', 'gram', 250, 62, 5.5, 4.5, 2.2, [['1 bát (250g)',250]]],
+      ['Canh cua rau đay mồng tơi', 'rau', 'gram', 250, 48, 4.5, 3.5, 1.6, [['1 bát (250g)',250]]],
+      ['Canh bí đao nấu thịt băm / tôm', 'rau', 'gram', 250, 42, 3.5, 3.2, 1.5, [['1 bát (250g)',250]]],
+      ['Canh rau ngót nấu thịt băm', 'rau', 'gram', 250, 48, 3.8, 2.5, 2, [['1 bát (250g)',250]]],
+      ['Canh khổ qua (mướp đắng) nhồi thịt', 'rau', 'gram', 250, 68, 5.5, 3.8, 3.5, [['1 bát (250g)',250]]],
+      ['Canh cải xanh / cải ngọt thịt băm', 'rau', 'gram', 250, 45, 3.5, 2.5, 2],
+      ['Canh sườn hầm rau củ (khoai, cà rốt)', 'rau', 'gram', 250, 88, 6, 7.5, 3.8],
+      ['Canh rong biển đậu phụ thịt băm', 'rau', 'gram', 250, 52, 4.2, 3, 2.2],
+      ['Canh khoai mỡ tôm thịt', 'rau', 'gram', 250, 75, 4, 11, 1.8],
+
+      // === TRÁI CÂY (trai) ===
+      ['Chuối chín', 'trai', 'gram', 100, 89, 1.1, 23, 0.3, [['1 quả (100g)',100],['2 quả (200g)',200]]],
+      ['Táo tươi', 'trai', 'gram', 150, 52, 0.3, 14, 0.2, [['1 quả (150g)',150]]],
+      ['Cam tươi', 'trai', 'gram', 150, 47, 0.9, 12, 0.1, [['1 quả (150g)',150]]],
+      ['Quýt tươi', 'trai', 'gram', 100, 53, 0.8, 13, 0.3],
+      ['Bưởi', 'trai', 'gram', 200, 38, 0.8, 9.6, 0.1, [['3 múi (150g)',150],['250g',250]]],
+      ['Ổi tươi', 'trai', 'gram', 150, 68, 2.6, 14, 1, [['1 quả (150g)',150]]],
+      ['Dưa hấu', 'trai', 'gram', 200, 30, 0.6, 7.6, 0.2, [['200g',200],['350g',350]]],
+      ['Dưa lưới', 'trai', 'gram', 200, 34, 0.8, 8.2, 0.2],
+      ['Thanh long (trắng / đỏ)', 'trai', 'gram', 200, 55, 1.2, 13, 0.4, [['Nửa quả (180g)',180]]],
+      ['Xoài chín', 'trai', 'gram', 150, 60, 0.8, 15, 0.4],
+      ['Xoài xanh chấm muối ớt', 'trai', 'gram', 150, 55, 0.7, 14, 0.2],
+      ['Đu đủ chín', 'trai', 'gram', 200, 43, 0.5, 11, 0.3],
+      ['Dứa (thơm / khóm)', 'trai', 'gram', 150, 50, 0.5, 13, 0.1],
+      ['Nho tươi', 'trai', 'gram', 150, 69, 0.7, 18, 0.2],
+      ['Lê tươi', 'trai', 'gram', 180, 57, 0.4, 15, 0.1, [['1 quả (180g)',180]]],
+      ['Dâu tây', 'trai', 'gram', 150, 32, 0.7, 7.7, 0.3],
+      ['Kiwi', 'trai', 'gram', 100, 61, 1.1, 15, 0.5],
+      ['Quả bơ sáp', 'trai', 'gram', 100, 160, 2, 9, 15, [['Nửa quả (100g)',100],['1 quả (200g)',200]]],
+      ['Mít chín', 'trai', 'gram', 100, 95, 1.7, 23, 0.6],
+      ['Sầu riêng (cơm sầu riêng)', 'trai', 'gram', 100, 147, 1.5, 27, 5.3, [['1 múi (100g)',100],['2 múi (200g)',200]]],
+      ['Nhãn / Vải thiều', 'trai', 'gram', 100, 66, 1.1, 16, 0.3],
+      ['Chôm chôm', 'trai', 'gram', 100, 82, 0.7, 21, 0.2],
+      ['Măng cụt', 'trai', 'gram', 100, 73, 0.4, 18, 0.6],
+      ['Na (mãng cầu ta)', 'trai', 'gram', 150, 94, 2.1, 24, 0.3],
+      ['Hồng xiêm (sapoche)', 'trai', 'gram', 120, 83, 0.4, 20, 1.1],
+      ['Lựu', 'trai', 'gram', 100, 83, 1.7, 19, 1.2],
+      ['Củ đậu (củ sắn)', 'trai', 'gram', 150, 38, 0.7, 9, 0.1],
+
+      // === ĐỒ UỐNG, SỮA & ĂN VẶT (uong) ===
+      ['Sữa tươi không đường', 'uong', 'ml', 180, 60, 3.2, 4.8, 3.2, [['1 hộp (180ml)',180],['250ml',250]]],
+      ['Sữa tươi ít đường / có đường', 'uong', 'ml', 180, 76, 3, 8.5, 3.2, [['1 hộp (180ml)',180]]],
+      ['Sữa đậu nành không đường', 'uong', 'ml', 200, 35, 3.3, 1.8, 1.6, [['1 hộp (200ml)',200]]],
+      ['Sữa đậu nành có đường (Fami)', 'uong', 'ml', 200, 58, 2.5, 8.5, 1.6, [['1 hộp (200ml)',200]]],
+      ['Sữa hạt hạnh nhân / óc chó không đường', 'uong', 'ml', 180, 30, 1, 2, 2.2, [['1 hộp (180ml)',180]]],
+      ['Sữa chua không đường', 'uong', 'gram', 100, 63, 3.8, 5, 3, [['1 hộp (100g)',100]]],
+      ['Sữa chua có đường (Vinamilk)', 'uong', 'gram', 100, 100, 3.5, 15, 2.8, [['1 hộp (100g)',100]]],
+      ['Sữa chua Hy Lạp không đường', 'uong', 'gram', 100, 73, 10, 4, 1.5, [['1 hộp (100g)',100],['150g',150]]],
+      ['Sữa đặc có đường (Ông Thọ)', 'uong', 'gram', 20, 321, 8, 55, 8.7, [['1 thìa (15g)',15],['30g',30]]],
+      ['Phô mai Con Bò Cười', 'uong', 'gram', 30, 260, 10, 4, 22, [['1 miếng (15g)',15],['2 miếng (30g)',30]]],
+      ['Whey Protein (bột đạm)', 'uong', 'gram', 30, 400, 80, 7, 4, [['1 muỗng (30g)',30],['2 muỗng (60g)',60]]],
+      ['Thanh Protein Bar', 'uong', 'gram', 60, 350, 33, 32, 11, [['1 thanh (60g)',60]]],
+      ['Cà phê đen đá không đường', 'uong', 'ml', 150, 2, 0.1, 0.3, 0, [['1 ly (150ml)',150]]],
+      ['Cà phê sữa đá', 'uong', 'ml', 200, 95, 2.5, 14, 3, [['1 ly (200ml)',200]]],
+      ['Bạc xỉu đá', 'uong', 'ml', 250, 115, 3, 16, 4, [['1 ly (250ml)',250]]],
+      ['Matcha Latte sữa tươi', 'uong', 'ml', 300, 78, 2.5, 11, 2.6, [['1 ly (300ml)',300]]],
+      ['Trà sữa trân châu đường đen', 'uong', 'ml', 400, 115, 1.5, 19, 3.6, [['Size M (350ml)',350],['Size L (500ml)',500]]],
+      ['Trà đào cam sả', 'uong', 'ml', 350, 42, 0.2, 10, 0, [['1 ly (350ml)',350]]],
+      ['Trà chanh / Trà tắc', 'uong', 'ml', 350, 35, 0.1, 8.5, 0, [['1 ly (350ml)',350]]],
+      ['Nước mía tươi', 'uong', 'ml', 300, 72, 0.2, 18, 0, [['1 ly (300ml)',300]]],
+      ['Nước dừa tươi', 'uong', 'ml', 300, 19, 0.7, 3.7, 0.2, [['1 trái (300ml)',300]]],
+      ['Nước cam ép (không đường)', 'uong', 'ml', 250, 45, 0.7, 10.4, 0.2, [['1 ly (250ml)',250]]],
+      ['Sinh tố bơ sữa đặc', 'uong', 'ml', 300, 145, 2.2, 15, 8.5, [['1 ly (300ml)',300]]],
+      ['Sinh tố xoài / dâu', 'uong', 'ml', 300, 85, 1.2, 18, 1.2, [['1 ly (300ml)',300]]],
+      ['Nước ngọt có gas (Coca / Pepsi)', 'uong', 'ml', 330, 42, 0, 10.6, 0, [['1 lon (330ml)',330]]],
+      ['Nước ngọt Zero / Không calo', 'uong', 'ml', 330, 0, 0, 0, 0, [['1 lon (330ml)',330]]],
+      ['Nước tăng lực (RedBull / Sting)', 'uong', 'ml', 250, 46, 0, 11, 0, [['1 lon (250ml)',250]]],
+      ['Nước bù điện giải (Revive / Pocari)', 'uong', 'ml', 500, 26, 0, 6.5, 0, [['1 chai (500ml)',500]]],
+      ['Bia lon (Tiger / Heineken / Sài Gòn)', 'uong', 'ml', 330, 43, 0.5, 3.5, 0, [['1 lon (330ml)',330],['2 lon (660ml)',660],['3 lon (990ml)',990]]],
+      ['Rượu vang đỏ / trắng', 'uong', 'ml', 150, 85, 0.1, 2.6, 0, [['1 ly (150ml)',150]]],
+      ['Hạt điều rang', 'uong', 'gram', 30, 553, 18, 30, 44, [['20g',20],['30g',30],['50g',50]]],
+      ['Hạnh nhân rang', 'uong', 'gram', 30, 579, 21, 22, 50, [['20g',20],['30g',30]]],
+      ['Đậu phộng (lạc) rang', 'uong', 'gram', 30, 567, 26, 16, 49, [['30g',30],['50g',50]]],
+      ['Hạt óc chó', 'uong', 'gram', 30, 654, 15, 14, 65, [['20g',20],['30g',30]]],
+      ['Bánh tráng trộn', 'uong', 'gram', 150, 240, 6, 36, 8, [['1 bịch (150g)',150]]],
+      ['Bánh tráng nướng Đà Lạt', 'uong', 'gram', 120, 260, 8, 28, 13, [['1 cái (120g)',120]]],
+      ['Snack khoai tây chiên (Lay\'s / Oishi)', 'uong', 'gram', 50, 536, 7, 53, 35, [['1 gói nhỏ (45g)',45]]],
+      ['Bánh quy Oreo / Cosy', 'uong', 'gram', 40, 480, 5, 70, 20, [['3 cái (35g)',35]]],
+      ['Sô-cô-la đen 70%', 'uong', 'gram', 30, 598, 7.8, 46, 43, [['20g',20],['30g',30]]],
+      ['Kem ốc quế / Kem hộp', 'uong', 'gram', 100, 207, 3.5, 24, 11, [['1 cây (80g)',80]]],
+      ['Chè thập cẩm / Chè đậu xanh', 'uong', 'gram', 250, 145, 3, 28, 2.5, [['1 ly (250g)',250]]],
+      ['Bánh flan (Caramen)', 'uong', 'gram', 100, 145, 4.5, 22, 4, [['1 hộp (100g)',100]]],
+      ['Bánh bông lan trứng muối', 'uong', 'gram', 100, 315, 8.5, 40, 13.5, [['1 miếng (80g)',80]]],
     ];
+
+    const FOOD_DB_100G = RAW_FOOD_DB.map(r => {
+      const unitShort = r[2] === 'ml' ? 'ml' : 'g';
+      const presets = r[8]
+        ? r[8].map(p => ({ l: p[0], w: p[1] }))
+        : [{ l: `100${unitShort}`, w: 100 }, { l: `${r[3]}${unitShort}`, w: r[3] }, { l: `${Math.round(r[3] * 1.5)}${unitShort}`, w: Math.round(r[3] * 1.5) }];
+      return { name: r[0], cat: r[1], unit: r[2], defaultW: r[3], cal100: r[4], p100: r[5], c100: r[6], f100: r[7], presets };
+    });
 
     // Helper: Remove Vietnamese diacritics for flexible search
     function removeTones(str) {
@@ -859,6 +1084,9 @@
 
     let todayMeals = [];
     let todayWorkouts = [];
+    let customFoods = []; // Cách 3: User's saved custom & AI-looked-up foods
+    let recentFoods = []; // Cách 3: User's recently logged foods
+    let activeFoodCat = 'all';
     let currentActiveSport = { id: 'football', met: 8.8, title: 'Đá bóng (Bóng đá)', icon: '⚽' };
     let tempScanResult = null;
     let selectedMealType = 'Bữa Trưa';
@@ -866,12 +1094,14 @@
     // Manual Entry State
     let selectedManualFood = FOOD_DB_100G[0]; // Default: Cơm trắng
     let manualMealType = 'Bữa Trưa';
-    let editingMealBase = null; // Stores per-100g rates for the meal currently being edited
+    let editingMealBase = null;
 
     const KEY_PROFILE = 'nutri_pwa_profile';
     const KEY_MEALS = 'nutri_pwa_meals';
     const KEY_WORKOUTS = 'nutri_pwa_workouts';
     const KEY_GEMINI = 'nutri_pwa_gemini_key';
+    const KEY_CUSTOM_FOODS = 'nutri_pwa_custom_foods_v1';
+    const KEY_RECENT_FOODS = 'nutri_pwa_recent_foods_v1';
 
     function getTodayDateStr() {
       const d = new Date();
@@ -895,6 +1125,12 @@
         const w = localStorage.getItem(KEY_WORKOUTS);
         if (w) todayWorkouts = JSON.parse(w).filter(item => item.date === todayStr);
 
+        const cf = localStorage.getItem(KEY_CUSTOM_FOODS);
+        if (cf) customFoods = JSON.parse(cf);
+
+        const rf = localStorage.getItem(KEY_RECENT_FOODS);
+        if (rf) recentFoods = JSON.parse(rf);
+
         // Hydrate Calc inputs from saved profile
         document.getElementById('calc-age').value = profile.age || 28;
         document.getElementById('calc-height').value = profile.height || 172;
@@ -914,7 +1150,9 @@
       }
 
       document.getElementById('manual-meal-time').value = getCurrentTimeStr();
+      updateFoodDbBadge();
       applySelectedManualFood(FOOD_DB_100G[0], false);
+      renderFoodBrowser();
       refreshUI();
     }
 
@@ -1085,51 +1323,189 @@
       }
     }
 
-    function filterFoodSuggestions() {
-      const inputEl = document.getElementById('manual-food-input');
-      const rawVal = inputEl.value;
-      const kw = removeTones(rawVal.trim());
-      const box = document.getElementById('manual-suggestions');
-      const clearBtn = document.getElementById('manual-clear-btn');
+    function updateFoodDbBadge() {
+      const total = FOOD_DB_100G.length + customFoods.length;
+      const badge = document.getElementById('food-db-count-badge');
+      if (badge) badge.innerText = `${total} món & AI`;
+    }
 
+    function getAllFoods() {
+      return [...customFoods, ...FOOD_DB_100G];
+    }
+
+    function saveCustomFoodToMemory(foodObj) {
+      const unitShort = foodObj.unit === 'ml' ? 'ml' : 'g';
+      const defaultW = foodObj.defaultW || 150;
+      const item = {
+        name: foodObj.name.trim(),
+        cat: 'saved',
+        isCustom: true,
+        unit: foodObj.unit || 'gram',
+        defaultW,
+        cal100: Number(foodObj.cal100) || 0,
+        p100: Number(foodObj.p100) || 0,
+        c100: Number(foodObj.c100) || 0,
+        f100: Number(foodObj.f100) || 0,
+        presets: foodObj.presets || [
+          { l: `100${unitShort}`, w: 100 },
+          { l: `${defaultW}${unitShort}`, w: defaultW },
+          { l: `${Math.round(defaultW * 1.5)}${unitShort}`, w: Math.round(defaultW * 1.5) }
+        ]
+      };
+      const normName = removeTones(item.name);
+      customFoods = [item, ...customFoods.filter(f => removeTones(f.name) !== normName)].slice(0, 100);
+      localStorage.setItem(KEY_CUSTOM_FOODS, JSON.stringify(customFoods));
+      updateFoodDbBadge();
+    }
+
+    function pushRecentFood(foodObj) {
+      const normName = removeTones(foodObj.name);
+      const item = {
+        name: foodObj.name.trim(),
+        unit: foodObj.unit || 'gram',
+        defaultW: foodObj.defaultW || foodObj.weightGrams || 150,
+        cal100: Number(foodObj.cal100) || 0,
+        p100: Number(foodObj.p100) || 0,
+        c100: Number(foodObj.c100) || 0,
+        f100: Number(foodObj.f100) || 0,
+        presets: foodObj.presets || null
+      };
+      recentFoods = [item, ...recentFoods.filter(f => removeTones(f.name) !== normName)].slice(0, 15);
+      localStorage.setItem(KEY_RECENT_FOODS, JSON.stringify(recentFoods));
+    }
+
+    function deleteCustomFood(encodedName, evt) {
+      if (evt) evt.stopPropagation();
+      const name = decodeURIComponent(encodedName);
+      if (!confirm(`Xóa món "${name}" khỏi danh sách Món của tôi?`)) return;
+      customFoods = customFoods.filter(f => f.name !== name);
+      localStorage.setItem(KEY_CUSTOM_FOODS, JSON.stringify(customFoods));
+      updateFoodDbBadge();
+      renderFoodBrowser();
+    }
+
+    function setFoodCategory(cat) {
+      activeFoodCat = cat;
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        if (btn.id === `cat-btn-${cat}`) {
+          btn.className = 'cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-black';
+        } else if (btn.id === 'cat-btn-saved') {
+          btn.className = 'cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-amber-300';
+        } else {
+          btn.className = 'cat-pill shrink-0 px-2.5 py-1.5 rounded-full bg-slate-950 border border-slate-700 text-slate-300';
+        }
+      });
+      renderFoodBrowser();
+    }
+
+    function onManualSearchInput() {
+      const rawVal = document.getElementById('manual-food-input').value;
+      const clearBtn = document.getElementById('manual-clear-btn');
       if (rawVal.length > 0) clearBtn.classList.remove('hidden');
       else clearBtn.classList.add('hidden');
+      document.getElementById('manual-ai-status').classList.add('hidden');
+      renderFoodBrowser();
+      recalcManualEntry();
+    }
 
-      const matches = kw
-        ? FOOD_DB_100G.filter(f => removeTones(f.name).includes(kw))
-        : FOOD_DB_100G.slice(0, 8);
+    function renderFoodBrowser() {
+      const rawVal = document.getElementById('manual-food-input').value.trim();
+      const kw = removeTones(rawVal);
+      const box = document.getElementById('manual-food-browser');
+      if (!box) return;
 
-      let html = matches.slice(0, 10).map(f => `
-        <button onclick="pickManualFoodByName('${f.name.replace(/'/g, "\\'")}')" class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-800 flex items-center justify-between text-xs border-b border-slate-900 last:border-0">
-          <span class="font-bold text-slate-200">${f.name}</span>
-          <span class="text-[10px] text-emerald-400 font-semibold">${f.cal100} kcal/100${f.unit === 'ml' ? 'ml' : 'g'}</span>
-        </button>
-      `).join('');
-
-      if (rawVal.trim().length > 0 && matches.length === 0) {
-        html = `
-          <button onclick="useCustomManualFood()" class="w-full text-left px-2.5 py-2 rounded-lg bg-sky-950/60 border border-sky-700/50 text-xs">
-            <span class="font-bold text-sky-300">+ Dùng món tự nhập: "${rawVal.trim()}"</span>
-            <span class="block text-[10px] text-slate-400 mt-0.5">Bấm vào đây để tự chỉnh Calo/100g & khối lượng</span>
-          </button>
-        `;
+      let list = [];
+      if (kw) {
+        // Search across ALL foods (custom + built-in)
+        list = getAllFoods().filter(f => removeTones(f.name).includes(kw));
+      } else if (activeFoodCat === 'saved') {
+        // Combine custom saved foods + recently logged foods without duplicates
+        const seen = new Set();
+        const combined = [];
+        customFoods.forEach(f => {
+          const k = removeTones(f.name);
+          if (!seen.has(k)) { seen.add(k); combined.push({ ...f, badge: '⭐ Đã lưu' }); }
+        });
+        recentFoods.forEach(f => {
+          const k = removeTones(f.name);
+          if (!seen.has(k)) { seen.add(k); combined.push({ ...f, badge: '🕒 Gần đây' }); }
+        });
+        list = combined;
+      } else if (activeFoodCat === 'all') {
+        // Show recent + custom first, then popular Vietnamese foods
+        list = getAllFoods();
+      } else {
+        list = FOOD_DB_100G.filter(f => f.cat === activeFoodCat);
       }
 
-      box.innerHTML = html;
-      box.classList.remove('hidden');
-      recalcManualEntry();
+      if (list.length === 0) {
+        if (kw) {
+          box.innerHTML = `
+            <div class="p-2.5 text-center space-y-2">
+              <p class="text-[11px] text-slate-400">Chưa có <b class="text-white">"${rawVal}"</b> trong kho có sẵn.</p>
+              <button onclick="lookupFoodWithAI()" class="w-full py-2 px-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black rounded-xl text-xs active:scale-95">
+                ✨ Hỏi AI tự tra Calo cho "${rawVal}"
+              </button>
+              <button onclick="useCustomManualFood()" class="w-full py-1.5 px-3 bg-slate-900 border border-slate-700 text-sky-400 font-bold rounded-xl text-[11px]">
+                ✍️ Hoặc tự nhập Calo/100g thủ công
+              </button>
+            </div>
+          `;
+        } else {
+          box.innerHTML = `
+            <div class="p-3 text-center text-[11px] text-slate-500">
+              Chưa có món nào trong mục ⭐ Của tôi. Khi bạn lưu bữa ăn hoặc dùng ✨ AI Tra, món sẽ tự động xuất hiện ở đây!
+            </div>
+          `;
+        }
+        return;
+      }
+
+      const displayLimit = kw ? 30 : 50;
+      const rowsHtml = list.slice(0, displayLimit).map(f => {
+        const unitShort = f.unit === 'ml' ? 'ml' : 'g';
+        const encName = encodeURIComponent(f.name);
+        const isSelected = selectedManualFood && selectedManualFood.name === f.name;
+        return `
+          <div onclick="pickManualFoodByEncoded('${encName}')" class="w-full cursor-pointer px-2.5 py-2 rounded-lg ${isSelected ? 'bg-emerald-950/70 border border-emerald-500/50' : 'hover:bg-slate-800/80 border border-transparent'} flex items-center justify-between text-xs transition">
+            <div class="min-w-0 pr-2">
+              <span class="font-bold ${isSelected ? 'text-emerald-300' : 'text-slate-200'} block truncate">${f.isCustom ? '⭐ ' : ''}${f.name}</span>
+              <span class="text-[9px] text-slate-400">${f.badge ? f.badge + ' • ' : ''}P:${f.p100}g • C:${f.c100}g • F:${f.f100}g /100${unitShort}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] text-emerald-400 font-bold bg-slate-900 px-1.5 py-0.5 rounded">${f.cal100} kcal</span>
+              ${f.isCustom ? `<button onclick="deleteCustomFood('${encName}', event)" class="text-[10px] text-rose-400 px-1">✕</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const footerHtml = kw ? `
+        <button onclick="lookupFoodWithAI()" class="w-full mt-1 py-1.5 px-2.5 rounded-lg bg-violet-950/50 border border-violet-700/50 text-[10px] font-bold text-violet-300 text-center">
+          ✨ Không đúng ý? Bấm nhờ AI tra chính xác "${rawVal}"
+        </button>
+      ` : '';
+
+      box.innerHTML = rowsHtml + footerHtml;
     }
 
     function clearManualFood() {
       document.getElementById('manual-food-input').value = '';
       document.getElementById('manual-clear-btn').classList.add('hidden');
-      document.getElementById('manual-suggestions').classList.add('hidden');
+      document.getElementById('manual-ai-status').classList.add('hidden');
+      renderFoodBrowser();
+    }
+
+    function pickManualFoodByEncoded(encName) {
+      const foodName = decodeURIComponent(encName);
+      pickManualFoodByName(foodName);
     }
 
     function pickManualFoodByName(foodName) {
-      const found = FOOD_DB_100G.find(f => f.name === foodName);
+      const found = getAllFoods().find(f => f.name === foodName) || recentFoods.find(f => f.name === foodName);
       if (found) {
         applySelectedManualFood(found, true);
+        renderFoodBrowser();
       }
     }
 
@@ -1139,7 +1515,6 @@
         document.getElementById('manual-food-input').value = foodObj.name;
         document.getElementById('manual-clear-btn').classList.remove('hidden');
       }
-      document.getElementById('manual-suggestions').classList.add('hidden');
       document.getElementById('manual-custom-rate-box').classList.add('hidden');
 
       document.getElementById('manual-weight-input').value = foodObj.defaultW || 150;
@@ -1149,8 +1524,13 @@
       document.getElementById('custom-c100').value = foodObj.c100;
       document.getElementById('custom-f100').value = foodObj.f100;
 
-      // Render quick portion presets
-      const presets = foodObj.presets || [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200},{l:'300g',w:300}];
+      const unitShort = foodObj.unit === 'ml' ? 'ml' : 'g';
+      const presets = foodObj.presets || [
+        { l: `100${unitShort}`, w: 100 },
+        { l: `${foodObj.defaultW || 150}${unitShort}`, w: foodObj.defaultW || 150 },
+        { l: `200${unitShort}`, w: 200 },
+        { l: `300${unitShort}`, w: 300 }
+      ];
       document.getElementById('manual-portion-presets').innerHTML = presets.map(p => `
         <button onclick="setManualWeight(${p.w})" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-slate-300 hover:border-emerald-500 font-semibold">${p.l}</button>
       `).join('');
@@ -1158,16 +1538,126 @@
       recalcManualEntry();
     }
 
+    // Cách 2: Gemini AI Text Food Lookup (Infinite Food Database!)
+    function saveInlineGeminiKey() {
+      const k = document.getElementById('manual-inline-key-input').value.trim();
+      if (!k) {
+        alert('Vui lòng dán mã API Key vào ô trống!');
+        return;
+      }
+      localStorage.setItem(KEY_GEMINI, k);
+      document.getElementById('gemini-api-key-input').value = k;
+      document.getElementById('gemini-key-status-label').innerText = '✅ Đã kích hoạt Gemini Vision API Key (Bấm để sửa)';
+      document.getElementById('manual-ai-key-prompt').classList.add('hidden');
+      lookupFoodWithAI();
+    }
+
+    async function lookupFoodWithAI() {
+      const foodQuery = document.getElementById('manual-food-input').value.trim();
+      if (!foodQuery) {
+        alert('Hãy gõ tên món ăn bạn muốn AI tra cứu vào ô tìm kiếm trước nhé (VD: vịt quay, bún ốc, trà đào...)!');
+        document.getElementById('manual-food-input').focus();
+        return;
+      }
+
+      const apiKey = localStorage.getItem(KEY_GEMINI);
+      if (!apiKey) {
+        document.getElementById('manual-ai-key-prompt').classList.remove('hidden');
+        document.getElementById('manual-inline-key-input').focus();
+        return;
+      }
+
+      const statusBox = document.getElementById('manual-ai-status');
+      const btn = document.getElementById('btn-ai-lookup');
+      btn.disabled = true;
+      btn.innerText = '⏳ Đang tra...';
+      statusBox.className = 'rounded-xl p-2 text-[11px] flex items-center gap-2 bg-violet-950/60 border border-violet-600/40 text-violet-200';
+      statusBox.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin shrink-0"></div><span>Gemini AI đang tra dinh dưỡng cho "<b>${foodQuery}</b>"...</span>`;
+      statusBox.classList.remove('hidden');
+
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const prompt = `Bạn là chuyên gia dinh dưỡng Việt Nam (Viện Dinh Dưỡng Quốc Gia & USDA).
+Hãy tra cứu giá trị dinh dưỡng TRÊN MỖI 100g (hoặc 100ml nếu là đồ uống) cho món: "${foodQuery}".
+Trả về JSON duy nhất đúng cấu trúc sau (không giải thích ngoài JSON):
+{
+  "valid": true,
+  "name": "Tên chuẩn tiếng Việt gọn đẹp của món ăn",
+  "unit": "gram hoặc ml",
+  "defaultW": 150,
+  "cal100": 180,
+  "p100": 15.0,
+  "c100": 12.0,
+  "f100": 8.0,
+  "portionLabel": "1 phần chuẩn (150g)"
+}
+Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về {"valid": false, "message": "Không phải thực phẩm hợp lệ."}`;
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || 'Lỗi kết nối Gemini API');
+
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+        if (!parsed.valid) {
+          statusBox.className = 'rounded-xl p-2 text-[11px] bg-rose-950/50 border border-rose-500/50 text-rose-200';
+          statusBox.innerText = `⚠️ ${parsed.message || 'Không nhận diện được món ăn này.'}`;
+          return;
+        }
+
+        const unit = parsed.unit === 'ml' ? 'ml' : 'gram';
+        const unitShort = unit === 'ml' ? 'ml' : 'g';
+        const defW = Number(parsed.defaultW) || 150;
+        const aiFoodObj = {
+          name: parsed.name || foodQuery,
+          cat: 'saved',
+          isCustom: true,
+          unit,
+          defaultW: defW,
+          cal100: Math.round(Number(parsed.cal100) || 0),
+          p100: Math.round((Number(parsed.p100) || 0) * 10) / 10,
+          c100: Math.round((Number(parsed.c100) || 0) * 10) / 10,
+          f100: Math.round((Number(parsed.f100) || 0) * 10) / 10,
+          presets: [
+            { l: `100${unitShort}`, w: 100 },
+            { l: parsed.portionLabel || `1 phần (${defW}${unitShort})`, w: defW },
+            { l: `${Math.round(defW * 1.5)}${unitShort}`, w: Math.round(defW * 1.5) }
+          ]
+        };
+
+        // Tự động lưu vào ⭐ Món của tôi (Cách 3!)
+        saveCustomFoodToMemory(aiFoodObj);
+        applySelectedManualFood(aiFoodObj, true);
+        renderFoodBrowser();
+
+        statusBox.className = 'rounded-xl p-2 text-[11px] bg-emerald-950/60 border border-emerald-500/50 text-emerald-300';
+        statusBox.innerHTML = `✅ AI đã tính xong <b>${aiFoodObj.name}</b> (${aiFoodObj.cal100} kcal/100${unitShort}) & tự lưu vào mục <b>⭐ Của tôi</b>!`;
+      } catch (err) {
+        statusBox.className = 'rounded-xl p-2 text-[11px] bg-rose-950/50 border border-rose-500/50 text-rose-200';
+        statusBox.innerText = `⚠️ Lỗi AI: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '✨ AI Tra';
+      }
+    }
+
     function useCustomManualFood() {
       const customName = document.getElementById('manual-food-input').value.trim() || 'Món ăn tự nhập';
       selectedManualFood = {
         name: customName,
+        isCustom: true,
         unit: 'gram',
         defaultW: 150,
         cal100: 150, p100: 10, c100: 20, f100: 4,
         presets: [{l:'100g',w:100},{l:'150g',w:150},{l:'200g',w:200},{l:'300g',w:300}]
       };
-      document.getElementById('manual-suggestions').classList.add('hidden');
       document.getElementById('manual-custom-rate-box').classList.remove('hidden');
       document.getElementById('manual-weight-input').value = 150;
       document.getElementById('custom-cal100').value = 150;
@@ -1266,6 +1756,14 @@
       const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]');
       allMeals.unshift(newMeal);
       localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+
+      // Cách 3: Tự động ghi nhớ vào 🕒 Gần đây và ⭐ Của tôi (nếu là món mới / đã sửa định mức)
+      pushRecentFood({ ...newMeal, defaultW: weight });
+      const existsInBuiltin = FOOD_DB_100G.some(f => removeTones(f.name) === removeTones(name) && f.cal100 === cal100);
+      if (!existsInBuiltin) {
+        saveCustomFoodToMemory({ ...newMeal, defaultW: weight });
+      }
+      renderFoodBrowser();
 
       alert(`✅ Đã lưu "${name}" (${weight}${newMeal.unit === 'ml' ? 'ml' : 'g'} = ${newMeal.calories} kcal) vào ${manualMealType}!`);
       refreshUI();
