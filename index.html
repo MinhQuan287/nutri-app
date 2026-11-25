@@ -152,12 +152,113 @@
       </div>
     </section>
 
-    <!-- ================= 2. MÀN HÌNH TÍNH BMI & MỤC TIÊU ================= -->
+    <!-- ================= 2. MÀN HÌNH MỤC TIÊU, BMI & CẬP NHẬT CÂN NẶNG ================= -->
     <section id="view-calc" class="hidden space-y-3.5">
-      <div class="pt-1">
-        <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">Thiết lập mục tiêu</span>
-        <h1 class="text-lg font-black text-white mt-1">Tính BMI & Calo Cần Nạp</h1>
-        <p class="text-[11px] text-slate-400">Nhập chỉ số thể trạng để AI tính toán mức thâm hụt calo an toàn y khoa.</p>
+      <div class="pt-1 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">Mục tiêu & Tiến độ</span>
+          <h1 class="text-lg font-black text-white mt-1">Theo Dõi Cân Nặng & BMI</h1>
+        </div>
+        <button onclick="resetWeightBaseline()" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-xl text-[10px] font-bold text-slate-400 active:scale-95">
+          🔄 Đặt lại mốc
+        </button>
+      </div>
+
+      <!-- ===== PHẦN A: CẬP NHẬT CÂN NẶNG & ĐÁNH GIÁ HIỆU QUẢ GIẢM CÂN ===== -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-4 border border-slate-800 space-y-3 shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-sky-400 font-bold uppercase tracking-wider">⚖️ Tiến độ từ mốc bắt đầu</span>
+            <p id="wt-baseline-info" class="text-[11px] text-slate-400 mt-0.5">Mốc lần 1: Chưa lưu mục tiêu</p>
+          </div>
+          <span id="wt-progress-pct" class="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/60">0%</span>
+        </div>
+
+        <!-- 3 Key Weight Stats -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-950/80 rounded-xl p-2 border border-slate-800/80">
+            <span class="text-[9px] text-slate-400 font-semibold block">Mốc bắt đầu</span>
+            <p id="wt-stat-start" class="text-sm font-black text-slate-200 mt-0.5">75.0 kg</p>
+          </div>
+          <div class="bg-slate-950/80 rounded-xl p-2 border border-emerald-500/30">
+            <span class="text-[9px] text-emerald-400 font-semibold block">Hiện tại</span>
+            <p id="wt-stat-current" class="text-sm font-black text-white mt-0.5">75.0 kg</p>
+            <span id="wt-stat-delta" class="text-[9px] font-bold text-slate-400 block">0.0 kg</span>
+          </div>
+          <div class="bg-slate-950/80 rounded-xl p-2 border border-slate-800/80">
+            <span class="text-[9px] text-amber-400 font-semibold block">Đích đến</span>
+            <p id="wt-stat-target" class="text-sm font-black text-amber-400 mt-0.5">69.0 kg</p>
+            <span id="wt-stat-remain" class="text-[9px] font-semibold text-slate-400 block">Còn 6.0 kg</span>
+          </div>
+        </div>
+
+        <!-- Weight Progress Bar -->
+        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+          <div id="wt-progress-bar" class="h-full bg-gradient-to-r from-sky-500 to-emerald-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- SVG Weight Trend Chart (Real vs Target Pace) -->
+        <div class="bg-slate-950/90 rounded-2xl p-2.5 border border-slate-800/90">
+          <div class="flex items-center justify-between text-[9px] text-slate-400 mb-1.5 px-1">
+            <span class="font-bold text-slate-300">Biểu đồ cân nặng thực tế</span>
+            <div class="flex items-center gap-2.5">
+              <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-emerald-400 inline-block"></span>Thực tế</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-amber-400/70 inline-block border-t border-dashed border-amber-400"></span>Mục tiêu</span>
+            </div>
+          </div>
+          <div id="wt-chart-container" class="w-full h-28 flex items-center justify-center">
+            <!-- SVG Chart rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- AI Effectiveness Assessment & Improvement Advice -->
+        <div id="wt-eval-box" class="bg-sky-950/30 border border-sky-500/40 rounded-2xl p-3 flex items-start gap-2.5 text-xs">
+          <span id="wt-eval-icon" class="text-base">📊</span>
+          <div class="flex-1">
+            <p id="wt-eval-title" class="font-bold text-sky-300 text-[11px]">Bắt đầu theo dõi hiệu quả giảm cân</p>
+            <p id="wt-eval-desc" class="text-[10px] text-slate-300 mt-0.5 leading-relaxed">
+              Hãy bấm "Lưu Kế Hoạch" bên dưới để chốt mốc xuất phát lần 1, sau đó cập nhật cân nặng mỗi 3–7 ngày để AI đánh giá tiến độ và gợi ý điều chỉnh chế độ ăn & tập luyện!
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Weight Update Form -->
+        <div class="bg-slate-950/80 rounded-2xl p-3 border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-emerald-400 font-bold uppercase">✍️ Cập nhật cân nặng mới:</label>
+            <input type="date" id="wt-input-date" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-[10px] font-bold text-slate-300">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="stepWeightLog(-0.1)" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs active:scale-95">-0.1</button>
+            <div class="flex-1 flex items-center bg-slate-900 border border-emerald-500/60 rounded-xl px-3 h-10">
+              <input type="number" id="wt-input-val" step="0.1" value="75.0" class="w-full bg-transparent text-center text-base font-black text-white focus:outline-hidden">
+              <span class="text-xs text-slate-400 font-bold ml-1">kg</span>
+            </div>
+            <button onclick="stepWeightLog(0.1)" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs active:scale-95">+0.1</button>
+          </div>
+
+          <div class="flex gap-1.5">
+            <input type="text" id="wt-input-note" placeholder="Ghi chú (VD: Cân sáng bụng đói, sau đá bóng...)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-[11px] text-white placeholder-slate-500 focus:outline-hidden">
+            <button onclick="addWeightLogEntry()" class="px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shrink-0 active:scale-95">
+              Lưu
+            </button>
+          </div>
+        </div>
+
+        <!-- Weight Log History List -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="font-bold text-slate-400 uppercase">Lịch sử cập nhật cân nặng (<span id="wt-log-count">0</span>)</span>
+            <span class="text-slate-500">Mới nhất ở trên</span>
+          </div>
+          <div id="wt-history-list" class="max-h-40 overflow-y-auto no-scrollbar space-y-1.5"></div>
+        </div>
+      </div>
+
+      <!-- ===== PHẦN B: THIẾT LẬP MỤC TIÊU & TÍNH BMI / CALO ===== -->
+      <div class="pt-2">
+        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">⚙️ Cài đặt chỉ số & Kế hoạch Calo</span>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
@@ -1128,6 +1229,7 @@
 
     let allMealsStore = [];
     let allWorkoutsStore = [];
+    let weightLogs = [];
     let todayMeals = [];
     let todayWorkouts = [];
     let selectedLogDate = '';
@@ -1146,6 +1248,7 @@
     const KEY_PROFILE = 'nutri_pwa_profile';
     const KEY_MEALS = 'nutri_pwa_meals';
     const KEY_WORKOUTS = 'nutri_pwa_workouts';
+    const KEY_WEIGHT_LOG = 'nutri_pwa_weight_log_v1';
     const KEY_GEMINI = 'nutri_pwa_gemini_key';
     const KEY_CUSTOM_FOODS = 'nutri_pwa_custom_foods_v1';
     const KEY_RECENT_FOODS = 'nutri_pwa_recent_foods_v1';
@@ -1222,6 +1325,15 @@
         const w = localStorage.getItem(KEY_WORKOUTS);
         if (w) allWorkoutsStore = JSON.parse(w);
 
+        const wl = localStorage.getItem(KEY_WEIGHT_LOG);
+        if (wl) weightLogs = JSON.parse(wl);
+
+        // If user already had a saved profile from before, initialize baseline if missing
+        if (p && !profile.startDate) {
+          profile.startDate = (weightLogs.length > 0 ? weightLogs[0].date : getTodayDateStr());
+          profile.startWeight = (weightLogs.length > 0 ? weightLogs[0].weight : profile.weight);
+        }
+
         syncTodaySlices();
 
         const cf = localStorage.getItem(KEY_CUSTOM_FOODS);
@@ -1237,6 +1349,8 @@
         document.getElementById('calc-target-weight').value = profile.targetWeight || 69.0;
         document.getElementById('calc-months').value = profile.months || 3;
         document.getElementById('calc-activity').value = profile.activity || 1.55;
+        document.getElementById('btn-male').className = profile.gender === 'male' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
+        document.getElementById('btn-female').className = profile.gender === 'female' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
 
         // Hydrate Gemini key status
         const gk = localStorage.getItem(KEY_GEMINI);
@@ -1251,6 +1365,8 @@
       selectedLogDate = getTodayDateStr();
       document.getElementById('manual-meal-date').value = selectedLogDate;
       document.getElementById('manual-meal-time').value = getCurrentTimeStr();
+      document.getElementById('wt-input-date').value = selectedLogDate;
+      document.getElementById('wt-input-val').value = (profile.weight || 75.0).toFixed(1);
       updateFoodDbBadge();
       applySelectedManualFood(FOOD_DB_100G[0], false);
       renderFoodBrowser();
@@ -1286,8 +1402,15 @@
       document.getElementById('dash-f-target').innerText = profile.targetF || 48;
 
       document.getElementById('dash-burned-total').innerText = `-${totalBurned}`;
-      document.getElementById('dash-weight-display').innerText = profile.weight || 75.0;
-      document.getElementById('dash-target-weight-sub').innerText = `Mục tiêu: ${profile.targetWeight || 69.0} kg`;
+      const latestWt = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : (profile.weight || 75.0);
+      document.getElementById('dash-weight-display').innerText = Number(latestWt).toFixed(1);
+      if (profile.startWeight && profile.startDate) {
+        const diffFromStart = Math.round((latestWt - profile.startWeight) * 10) / 10;
+        const sign = diffFromStart > 0 ? '+' : '';
+        document.getElementById('dash-target-weight-sub').innerText = `${diffFromStart <= 0 ? '↓' : '↑'} ${sign}${diffFromStart.toFixed(1)}kg • Đích ${profile.targetWeight || 69.0}kg`;
+      } else {
+        document.getElementById('dash-target-weight-sub').innerText = `Mục tiêu: ${profile.targetWeight || 69.0} kg`;
+      }
       document.getElementById('dash-meals-count').innerText = todayMeals.length;
 
       let summaryMsg = '';
@@ -1477,6 +1600,9 @@
           </div>
         `).join('');
       }
+
+      // 4. Weight Progress & Effectiveness Section in Tab Mục tiêu
+      renderWeightProgress();
     }
 
     // ==================== MANUAL FOOD ENTRY + GRAM CONVERSION ====================
@@ -2100,10 +2226,297 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
     }
 
     function saveGoalToDevice() {
+      const todayKey = getTodayDateStr();
+      let isFirstTime = false;
+      if (!profile.startDate || !profile.startWeight) {
+        profile.startDate = todayKey;
+        profile.startWeight = profile.weight;
+        isFirstTime = true;
+      }
+
+      // Ensure baseline entry exists in weightLogs on first goal save
+      if (weightLogs.length === 0) {
+        weightLogs.push({
+          id: 'baseline-' + Date.now(),
+          date: profile.startDate,
+          weight: profile.startWeight,
+          note: 'Mốc bắt đầu lộ trình'
+        });
+        localStorage.setItem(KEY_WEIGHT_LOG, JSON.stringify(weightLogs));
+      }
+
       localStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
-      alert('✅ Đã lưu mục tiêu giảm cân vào điện thoại!');
+      document.getElementById('wt-input-val').value = Number(profile.weight).toFixed(1);
+
+      alert(isFirstTime
+        ? `✅ Đã lưu kế hoạch & chốt mốc bắt đầu (${profile.startWeight}kg ngày ${formatFriendlyDateLabel(profile.startDate)})!`
+        : '✅ Đã cập nhật kế hoạch mục tiêu vào điện thoại!'
+      );
       refreshUI();
       switchTab('dashboard');
+    }
+
+    // ==================== WEIGHT TRACKING & EFFECTIVENESS ANALYZER ====================
+    function stepWeightLog(delta) {
+      const inp = document.getElementById('wt-input-val');
+      const cur = parseFloat(inp.value) || profile.weight || 75.0;
+      inp.value = Math.max(30, Math.round((cur + delta) * 10) / 10).toFixed(1);
+    }
+
+    function addWeightLogEntry() {
+      const val = Math.round((parseFloat(document.getElementById('wt-input-val').value) || 0) * 10) / 10;
+      if (val < 25 || val > 250) {
+        alert('Vui lòng nhập cân nặng hợp lệ (từ 25 đến 250 kg).');
+        return;
+      }
+      const dateStr = document.getElementById('wt-input-date').value || getTodayDateStr();
+      const note = document.getElementById('wt-input-note').value.trim();
+
+      // If no baseline exists yet, set this first entry or current profile as baseline
+      if (!profile.startDate || !profile.startWeight) {
+        profile.startDate = dateStr;
+        profile.startWeight = val;
+      }
+
+      // If an entry already exists for the same date, update it so chart stays clean
+      const existingIdx = weightLogs.findIndex(w => w.date === dateStr);
+      if (existingIdx >= 0) {
+        weightLogs[existingIdx].weight = val;
+        if (note) weightLogs[existingIdx].note = note;
+      } else {
+        weightLogs.push({
+          id: Date.now().toString(),
+          date: dateStr,
+          weight: val,
+          note: note || 'Cập nhật cân nặng'
+        });
+      }
+
+      // Sort chronologically ascending
+      weightLogs.sort((a, b) => a.date.localeCompare(b.date));
+      localStorage.setItem(KEY_WEIGHT_LOG, JSON.stringify(weightLogs));
+
+      // Sync latest weight into profile & BMI/MET calculations
+      const latest = weightLogs[weightLogs.length - 1];
+      profile.weight = latest.weight;
+      document.getElementById('calc-weight').value = latest.weight;
+      runCalculations();
+      localStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
+
+      document.getElementById('wt-input-note').value = '';
+      refreshUI();
+      alert(`⚖️ Đã cập nhật cân nặng ${val.toFixed(1)} kg (${formatFriendlyDateLabel(dateStr)})!`);
+    }
+
+    function deleteWeightLogEntry(id) {
+      if (!confirm('Xóa lần cập nhật cân nặng này?')) return;
+      weightLogs = weightLogs.filter(w => w.id !== id);
+      localStorage.setItem(KEY_WEIGHT_LOG, JSON.stringify(weightLogs));
+      if (weightLogs.length > 0) {
+        const latest = weightLogs[weightLogs.length - 1];
+        profile.weight = latest.weight;
+        document.getElementById('calc-weight').value = latest.weight;
+        runCalculations();
+        localStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
+      }
+      refreshUI();
+    }
+
+    function resetWeightBaseline() {
+      if (!confirm('Đặt lại mốc bắt đầu sang ngày hôm nay với cân nặng hiện tại? (Lịch sử cân nặng cũ sẽ được xóa để bắt đầu chu kỳ mới)')) return;
+      const todayKey = getTodayDateStr();
+      const curW = parseFloat(document.getElementById('calc-weight').value) || profile.weight || 75.0;
+      profile.startDate = todayKey;
+      profile.startWeight = curW;
+      profile.weight = curW;
+      weightLogs = [{ id: 'baseline-' + Date.now(), date: todayKey, weight: curW, note: 'Mốc bắt đầu mới' }];
+      localStorage.setItem(KEY_WEIGHT_LOG, JSON.stringify(weightLogs));
+      localStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
+      document.getElementById('wt-input-val').value = curW.toFixed(1);
+      refreshUI();
+    }
+
+    function renderWeightProgress() {
+      const startW = Number(profile.startWeight || profile.weight || 75.0);
+      const targetW = Number(profile.targetWeight || 69.0);
+      const startDate = profile.startDate || getTodayDateStr();
+      const totalDaysGoal = (Number(profile.months) || 3) * 30;
+
+      const sortedLogs = [...weightLogs].sort((a, b) => a.date.localeCompare(b.date));
+      const currentW = sortedLogs.length > 0 ? Number(sortedLogs[sortedLogs.length - 1].weight) : Number(profile.weight || startW);
+      const latestDate = sortedLogs.length > 0 ? sortedLogs[sortedLogs.length - 1].date : getTodayDateStr();
+
+      const daysElapsed = Math.max(0, Math.round((parseDateKey(latestDate) - parseDateKey(startDate)) / 86400000));
+      const dStart = parseDateKey(startDate);
+      const startDateFmt = `${String(dStart.getDate()).padStart(2, '0')}/${String(dStart.getMonth() + 1).padStart(2, '0')}/${dStart.getFullYear()}`;
+
+      document.getElementById('wt-baseline-info').innerText = profile.startDate
+        ? `Mốc lần 1: ${startDateFmt} • Ngày thứ ${daysElapsed + 1} / ${totalDaysGoal}`
+        : `Chưa chốt mốc — Hãy bấm "Lưu Kế Hoạch" bên dưới`;
+
+      // Progress calculations (handles both weight loss and weight gain goals)
+      const isLossGoal = startW >= targetW;
+      const totalGoalDelta = Math.abs(startW - targetW);
+      const actualChange = Math.round((currentW - startW) * 10) / 10; // negative = lost weight
+      const achievedTowardGoal = isLossGoal ? (startW - currentW) : (currentW - startW);
+      const remainTowardGoal = Math.max(0, Math.round((totalGoalDelta - achievedTowardGoal) * 10) / 10);
+      const pct = totalGoalDelta > 0 ? Math.max(0, Math.min(100, Math.round((achievedTowardGoal / totalGoalDelta) * 100))) : 100;
+
+      document.getElementById('wt-stat-start').innerText = `${startW.toFixed(1)} kg`;
+      document.getElementById('wt-stat-current').innerText = `${currentW.toFixed(1)} kg`;
+      document.getElementById('wt-stat-target').innerText = `${targetW.toFixed(1)} kg`;
+      document.getElementById('wt-stat-remain').innerText = remainTowardGoal <= 0 ? '🎉 Đạt đích!' : `Còn ${remainTowardGoal.toFixed(1)} kg`;
+      document.getElementById('wt-progress-pct').innerText = `${pct}%`;
+      document.getElementById('wt-progress-bar').style.width = `${pct}%`;
+
+      const deltaEl = document.getElementById('wt-stat-delta');
+      if (actualChange === 0) {
+        deltaEl.innerText = '0.0 kg';
+        deltaEl.className = 'text-[9px] font-bold text-slate-400 block';
+      } else {
+        const goodDir = isLossGoal ? actualChange < 0 : actualChange > 0;
+        deltaEl.innerText = `${actualChange < 0 ? '↓' : '↑'} ${actualChange > 0 ? '+' : ''}${actualChange.toFixed(1)} kg`;
+        deltaEl.className = `text-[9px] font-bold block ${goodDir ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+
+      // Render SVG Chart
+      renderWeightSvgChart(sortedLogs, startW, targetW, startDate);
+
+      // AI Effectiveness Evaluation & Actionable Improvement Advice
+      const evalBox = document.getElementById('wt-eval-box');
+      const evalIcon = document.getElementById('wt-eval-icon');
+      const evalTitle = document.getElementById('wt-eval-title');
+      const evalDesc = document.getElementById('wt-eval-desc');
+
+      if (sortedLogs.length < 2 || daysElapsed === 0) {
+        evalBox.className = 'bg-sky-950/30 border border-sky-500/40 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+        evalIcon.innerText = '📊';
+        evalTitle.className = 'font-bold text-sky-300 text-[11px]';
+        evalTitle.innerText = 'Đã ghi nhận mốc xuất phát — Chờ lần cân tiếp theo';
+        evalDesc.innerText = 'Hãy cân lại vào buổi sáng (sau khi đi vệ sinh, trước khi ăn) sau 3–7 ngày nữa rồi nhập vào ô bên dưới. AI sẽ so sánh thực tế với đường mục tiêu để đánh giá hiệu quả!';
+      } else {
+        const expectedChangeByNow = (totalGoalDelta / totalDaysGoal) * daysElapsed;
+        const gap = Math.round((achievedTowardGoal - expectedChangeByNow) * 10) / 10; // positive = ahead of schedule
+        const weeklyPace = Math.round((achievedTowardGoal / (daysElapsed / 7)) * 100) / 100;
+
+        if (achievedTowardGoal >= totalGoalDelta && totalGoalDelta > 0) {
+          evalBox.className = 'bg-emerald-950/50 border border-emerald-500 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+          evalIcon.innerText = '🏆';
+          evalTitle.className = 'font-bold text-emerald-300 text-[11px]';
+          evalTitle.innerText = 'Xuất sắc! Bạn đã cán đích cân nặng mục tiêu!';
+          evalDesc.innerText = 'Hãy chuyển sang chế độ ăn duy trì (bằng mức TDEE) và tiếp tục tập đá bóng/gym đều đặn để giữ vóc dáng săn chắc nhé!';
+        } else if (isLossGoal && weeklyPace > 1.2) {
+          evalBox.className = 'bg-amber-950/40 border border-amber-500/50 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+          evalIcon.innerText = '⚠️';
+          evalTitle.className = 'font-bold text-amber-300 text-[11px]';
+          evalTitle.innerText = `Giảm khá nhanh (~${weeklyPace} kg/tuần) — Cẩn thận mất cơ`;
+          evalDesc.innerText = `Bạn đã giảm ${achievedTowardGoal.toFixed(1)}kg sau ${daysElapsed} ngày (nhanh hơn kế hoạch ${gap}kg). Nên tăng thêm 150–200 kcal/ngày từ nguồn đạm (ức gà, trứng, thịt nạc) để giữ cơ bắp.`;
+        } else if (gap >= -0.2) {
+          evalBox.className = 'bg-emerald-950/40 border border-emerald-500/50 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+          evalIcon.innerText = '🔥';
+          evalTitle.className = 'font-bold text-emerald-300 text-[11px]';
+          evalTitle.innerText = `Rất hiệu quả! Đang đi đúng tiến độ (~${weeklyPace} kg/tuần)`;
+          evalDesc.innerText = `Sau ${daysElapsed} ngày bạn đã ${isLossGoal ? 'giảm' : 'tăng'} ${achievedTowardGoal.toFixed(1)}kg (kỳ vọng: ${expectedChangeByNow.toFixed(1)}kg). Chế độ dinh dưỡng và lịch tập hiện tại đang phát huy tác dụng rất tốt — hãy tiếp tục duy trì!`;
+        } else if (achievedTowardGoal > 0) {
+          evalBox.className = 'bg-amber-950/40 border border-amber-500/50 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+          evalIcon.innerText = '💡';
+          evalTitle.className = 'font-bold text-amber-300 text-[11px]';
+          evalTitle.innerText = `Có giảm nhưng hơi chậm hơn kế hoạch (${Math.abs(gap).toFixed(1)}kg)`;
+          evalDesc.innerText = `Mới giảm ${achievedTowardGoal.toFixed(1)}kg sau ${daysElapsed} ngày (kỳ vọng ${expectedChangeByNow.toFixed(1)}kg). Gợi ý cải thiện: cắt giảm ~150 kcal tinh bột/đồ uống ngọt mỗi ngày hoặc tăng thêm 1 buổi đá bóng / chạy bộ 30 phút mỗi tuần.`;
+        } else {
+          evalBox.className = 'bg-rose-950/40 border border-rose-500/50 rounded-2xl p-3 flex items-start gap-2.5 text-xs';
+          evalIcon.innerText = '🚨';
+          evalTitle.className = 'font-bold text-rose-300 text-[11px]';
+          evalTitle.innerText = `Cân nặng đang chững hoặc tăng (+${Math.abs(actualChange).toFixed(1)}kg)`;
+          evalDesc.innerText = `Chế độ ăn hiện tại có thể đang dư calo (hoặc sót đồ uống/ăn vặt trong Nhật ký). Đề xuất cải thiện: cân đo kỹ hơn phần cơm & dầu mỡ, giảm 200–300 kcal/ngày và tập Cardio/Đá bóng ít nhất 3 buổi/tuần!`;
+        }
+      }
+
+      // Render Weight History List (Newest first)
+      document.getElementById('wt-log-count').innerText = sortedLogs.length;
+      const listEl = document.getElementById('wt-history-list');
+      if (sortedLogs.length === 0) {
+        listEl.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-2">Chưa có lần cập nhật nào. Nhập cân nặng ở trên để bắt đầu!</p>';
+      } else {
+        const reversed = [...sortedLogs].reverse();
+        listEl.innerHTML = reversed.map((item, idx) => {
+          const prevItem = reversed[idx + 1];
+          let diffHtml = '<span class="text-[9px] text-sky-400 font-bold">Mốc đầu</span>';
+          if (prevItem) {
+            const d = Math.round((item.weight - prevItem.weight) * 10) / 10;
+            const good = isLossGoal ? d <= 0 : d >= 0;
+            diffHtml = `<span class="text-[9px] font-bold ${d === 0 ? 'text-slate-400' : good ? 'text-emerald-400' : 'text-rose-400'}">${d > 0 ? '+' : ''}${d.toFixed(1)} kg</span>`;
+          }
+          return `
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-xs">
+              <div>
+                <p class="font-bold text-white">${formatFriendlyDateLabel(item.date)}</p>
+                <p class="text-[9px] text-slate-400">${item.note || 'Cập nhật cân nặng'}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <span class="font-black text-emerald-400 block">${Number(item.weight).toFixed(1)} kg</span>
+                  ${diffHtml}
+                </div>
+                <button onclick="deleteWeightLogEntry('${item.id}')" class="text-[10px] text-rose-400 font-bold px-1">✕</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function renderWeightSvgChart(sortedLogs, startW, targetW, startDate) {
+      const container = document.getElementById('wt-chart-container');
+      const points = sortedLogs.length > 0
+        ? sortedLogs
+        : [{ date: startDate, weight: startW }];
+
+      const W = 310, H = 104, padL = 32, padR = 14, padT = 12, padB = 20;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const allWeights = [...points.map(p => Number(p.weight)), startW, targetW];
+      const minW = Math.floor(Math.min(...allWeights) - 1);
+      const maxW = Math.ceil(Math.max(...allWeights) + 1);
+      const rangeW = Math.max(2, maxW - minW);
+
+      const yOf = (wt) => padT + ((maxW - wt) / rangeW) * plotH;
+      const xOf = (idx) => points.length <= 1 ? padL + plotW * 0.15 : padL + (idx / (points.length - 1)) * plotW;
+
+      const targetY = yOf(targetW);
+      const startY = yOf(startW);
+
+      const polyPts = points.map((p, i) => `${xOf(i).toFixed(1)},${yOf(Number(p.weight)).toFixed(1)}`).join(' ');
+      const circles = points.map((p, i) => {
+        const cx = xOf(i).toFixed(1);
+        const cy = yOf(Number(p.weight)).toFixed(1);
+        const d = parseDateKey(p.date);
+        const lbl = `${d.getDate()}/${d.getMonth() + 1}`;
+        const showLabel = points.length <= 6 || i === 0 || i === points.length - 1 || i % Math.ceil(points.length / 4) === 0;
+        return `
+          <circle cx="${cx}" cy="${cy}" r="3.5" fill="#10b981" stroke="#090d16" stroke-width="1.5" />
+          ${showLabel ? `<text x="${cx}" y="${H - 4}" fill="#64748b" font-size="8" text-anchor="middle">${lbl}</text>` : ''}
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}" class="w-full h-full overflow-visible">
+          <!-- Y-axis guides -->
+          <line x1="${padL}" y1="${padT}" x2="${W - padR}" y2="${padT}" stroke="#1e293b" stroke-width="1" />
+          <line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="#1e293b" stroke-width="1" />
+          <text x="${padL - 4}" y="${padT + 3}" fill="#64748b" font-size="8" text-anchor="end">${maxW}kg</text>
+          <text x="${padL - 4}" y="${padT + plotH + 3}" fill="#64748b" font-size="8" text-anchor="end">${minW}kg</text>
+
+          <!-- Target Goal Dashed Line -->
+          <line x1="${padL}" y1="${targetY.toFixed(1)}" x2="${W - padR}" y2="${targetY.toFixed(1)}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.75" />
+          <text x="${W - padR}" y="${(targetY - 3).toFixed(1)}" fill="#fbbf24" font-size="8" font-weight="bold" text-anchor="end">Đích ${targetW}kg</text>
+
+          <!-- Actual Weight Trend Line -->
+          ${points.length > 1 ? `<polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyPts}" />` : ''}
+          ${circles}
+        </svg>
+      `;
     }
 
     function setCalcGender(g) {
@@ -2375,6 +2788,7 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
     function exportJSONData() {
       const fullData = {
         profile,
+        weightLogs,
         allMeals: allMealsStore,
         allWorkouts: allWorkoutsStore,
         customFoods,
