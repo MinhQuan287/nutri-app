@@ -1919,7 +1919,6 @@
       statusBox.classList.remove('hidden');
 
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
         const prompt = `Bạn là chuyên gia dinh dưỡng Việt Nam (Viện Dinh Dưỡng Quốc Gia & USDA).
 Hãy tra cứu giá trị dinh dưỡng TRÊN MỖI 100g (hoặc 100ml nếu là đồ uống) cho món: "${foodQuery}".
 Trả về JSON duy nhất đúng cấu trúc sau (không giải thích ngoài JSON):
@@ -1936,19 +1935,13 @@ Trả về JSON duy nhất đúng cấu trúc sau (không giải thích ngoài J
 }
 Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về {"valid": false, "message": "Không phải thực phẩm hợp lệ."}`;
 
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
+        const { data } = await callGeminiSmart(apiKey, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json' }
         });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message || 'Lỗi kết nối Gemini API');
-
-        const parsed = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+        const rawJson = data.candidates[0].content.parts[0].text.trim().replace(/^```json\s*/i, '').replace(/```$/,'').trim();
+        const parsed = JSON.parse(rawJson);
         if (!parsed.valid) {
           statusBox.className = 'rounded-xl p-2 text-[11px] bg-rose-950/50 border border-rose-500/50 text-rose-200';
           statusBox.innerText = `⚠️ ${parsed.message || 'Không nhận diện được món ăn này.'}`;
@@ -2609,30 +2602,20 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
         try {
           const base64Data = dataUrl.split(',')[1];
           const mimeType = file.type || 'image/jpeg';
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
           const prompt = `Bạn là chuyên gia dinh dưỡng Việt Nam & AI Vision. Kiểm tra ảnh này:
 1. NẾU KHÔNG PHẢI THỨC ĂN/ĐỒ UỐNG (bàn phím, đồ vật, người...): trả về JSON {"isFood": false, "message": "Ảnh không phải món ăn (Phát hiện: [tên vật thể]). Vui lòng chụp đúng đĩa thức ăn!"}
 2. NẾU LÀ THỨC ĂN/ĐỒ UỐNG: ước lượng tên món, khối lượng (weightGrams - số nguyên gram), calories (số nguyên), protein (p), carbs (c), fat (f), confidence.
 Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 300, "calories": 480, "p": 28, "c": 58, "f": 14, "confidence": "95%"}`;
 
-          const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64Data } }, { text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json' }
-            })
+          const { data } = await callGeminiSmart(apiKey, {
+            contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64Data } }, { text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
           });
 
-          const data = await res.json();
           document.getElementById('ai-loading').classList.add('hidden');
-
-          if (!res.ok) {
-            throw new Error(data?.error?.message || 'Lỗi kết nối Gemini API');
-          }
-
-          const parsed = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+          const rawJson = data.candidates[0].content.parts[0].text.trim().replace(/^```json\s*/i, '').replace(/```$/,'').trim();
+          const parsed = JSON.parse(rawJson);
           if (!parsed.isFood) {
             document.getElementById('scan-error-msg').innerText = parsed.message || 'Không phát hiện món ăn trong ảnh!';
             document.getElementById('scan-error-banner').classList.remove('hidden');
@@ -2961,6 +2944,72 @@ Nguyên tắc trả lời:
       handleCoachChat();
     }
 
+    const GEMINI_FALLBACK_MODELS = [
+      'gemini-3.1-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.1-flash-lite-preview',
+      'gemini-3.0-flash',
+      'gemini-2.5-flash-lite'
+    ];
+
+    async function callGeminiSmart(apiKey, bodyObj) {
+      let lastError = 'Lỗi kết nối Gemini API';
+      const tried = new Set();
+
+      async function tryModel(modelId) {
+        if (tried.has(modelId)) return null;
+        tried.add(modelId);
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyObj)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+          return { data, modelUsed: modelId };
+        }
+        const msg = data?.error?.message || `HTTP ${res.status}`;
+        lastError = msg;
+        if (res.status === 401 || res.status === 403 || /API key not valid/i.test(msg)) {
+          throw new Error('API Key không hợp lệ hoặc đã bị thu hồi. Hãy kiểm tra lại Key tại aistudio.google.com/apikey!');
+        }
+        return null;
+      }
+
+      // 1. Try prioritized fast & high-availability models
+      for (const m of GEMINI_FALLBACK_MODELS) {
+        const out = await tryModel(m);
+        if (out) return out;
+      }
+
+      // 2. Dynamic discovery: query models currently available for this API key
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (listRes.ok) {
+          const listJson = await listRes.json();
+          const available = (listJson.models || [])
+            .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /gemini/i.test(m.name) && !/tts|image|embedding|audio|robotics/i.test(m.name))
+            .map(m => m.name.replace(/^models\//, ''))
+            .sort((a, b) => (/flash-lite/i.test(b) ? 1 : 0) - (/flash-lite/i.test(a) ? 1 : 0));
+          for (const m of available.slice(0, 4)) {
+            const out = await tryModel(m);
+            if (out) return out;
+          }
+        }
+      } catch (e) {}
+
+      // 3. One quick retry after short pause for transient high demand
+      await new Promise(r => setTimeout(r, 1200));
+      for (const m of ['gemini-3.1-flash-lite', 'gemini-3.8-flash']) {
+        tried.delete(m);
+        const out = await tryModel(m);
+        if (out) return out;
+      }
+
+      throw new Error(lastError);
+    }
+
     async function handleCoachChat() {
       const input = document.getElementById('coach-chat-input');
       const sendBtn = document.getElementById('coach-send-btn');
@@ -2996,33 +3045,25 @@ Nguyên tắc trả lời:
       sendBtn.innerText = '...';
 
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-        // Send last 10 turns for smooth multi-turn context
         const contents = coachMessages.slice(-10).map(m => ({
           role: m.role === 'user' ? 'user' : 'model',
           parts: [{ text: m.text }]
         }));
 
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: buildHealthContextPrompt() }] },
-            contents,
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024
-            }
-          })
+        const { data, modelUsed } = await callGeminiSmart(apiKey, {
+          system_instruction: { parts: [{ text: buildHealthContextPrompt() }] },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+          }
         });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data?.error?.message || 'Lỗi kết nối Gemini API. Hãy kiểm tra lại API Key!');
-        }
 
         const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (!aiReply) throw new Error('AI không trả về nội dung.');
+
+        const badge = document.getElementById('coach-online-badge');
+        if (badge && modelUsed) badge.innerText = `${modelUsed} ✓`;
 
         coachMessages.push({ role: 'model', text: aiReply });
         localStorage.setItem(KEY_COACH_CHAT, JSON.stringify(coachMessages.slice(-30)));
