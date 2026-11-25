@@ -434,11 +434,14 @@
             </div>
           </div>
 
-          <!-- Select Meal Type & Time -->
+          <!-- Select Meal Type, Date & Time -->
           <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-[10px] text-slate-400 font-bold uppercase">3. Lưu vào bữa ăn:</label>
-              <input type="time" id="manual-meal-time" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-0.5 text-[11px] font-bold text-slate-200">
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-[10px] text-slate-400 font-bold uppercase shrink-0">3. Ngày & Giờ:</label>
+              <div class="flex items-center gap-1.5">
+                <input type="date" id="manual-meal-date" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+                <input type="time" id="manual-meal-time" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-0.5 text-[11px] font-bold text-slate-200">
+              </div>
             </div>
             <div class="grid grid-cols-4 gap-1.5 text-[10px] font-bold">
               <button onclick="setManualMealType('Bữa Sáng')" class="manual-meal-btn p-2 rounded-xl bg-slate-950 text-slate-300 border border-slate-800">🍳 Sáng</button>
@@ -653,18 +656,59 @@
         <button onclick="setMealSubTab('coach')" id="sub-btn-coach" class="flex-1 py-1.5 rounded-lg text-slate-400 transition">🤖 Trợ Lý AI Coach</button>
       </div>
 
-      <!-- Sub-view: MEAL LOG -->
+      <!-- Sub-view: MEAL LOG (Multi-Day History) -->
       <div id="sub-view-meals" class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-xs font-bold text-white">Tổng calo nạp hôm nay:</span>
-            <span id="meal-log-total-cal" class="text-sm font-black text-emerald-400 ml-1">0 kcal</span>
+        <!-- Date Navigation Card -->
+        <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="shiftLogDate(-1)" class="w-8 h-8 rounded-xl bg-slate-950 border border-slate-700 text-slate-200 font-black text-xs active:scale-95">◀</button>
+            <div class="flex-1 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <span id="log-date-label" class="text-xs font-black text-white">Hôm nay</span>
+                <button onclick="resetLogToToday()" id="log-today-btn" class="hidden px-2 py-0.5 bg-emerald-950 border border-emerald-600/50 text-emerald-400 rounded-full text-[9px] font-bold">Về hôm nay</button>
+              </div>
+              <input type="date" id="log-date-picker" onchange="setLogDate(this.value)" class="mt-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-0.5 text-[10px] font-bold text-slate-400 text-center">
+            </div>
+            <button onclick="shiftLogDate(1)" id="log-next-day-btn" class="w-8 h-8 rounded-xl bg-slate-950 border border-slate-700 text-slate-200 font-black text-xs active:scale-95">▶</button>
           </div>
-          <button onclick="openAddFoodMode('manual')" class="px-3 py-1.5 bg-sky-500 text-slate-950 font-black rounded-xl text-[11px] active:scale-95">
-            + Nhập Tay
-          </button>
+
+          <!-- 7-Day Quick Calendar Strip -->
+          <div id="log-week-strip" class="grid grid-cols-7 gap-1 text-center">
+            <!-- Populated dynamically -->
+          </div>
         </div>
+
+        <!-- Selected Day Summary Card -->
+        <div class="bg-gradient-to-r from-slate-900 to-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase">Tổng kết ngày đang xem</span>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span id="meal-log-total-cal" class="text-lg font-black text-emerald-400">0 kcal</span>
+                <span id="meal-log-burned-cal" class="text-[11px] font-bold text-amber-400">⚡ -0 kcal</span>
+              </div>
+            </div>
+            <button onclick="openAddFoodForSelectedDate()" class="px-3 py-1.5 bg-sky-500 text-slate-950 font-black rounded-xl text-[11px] active:scale-95">
+              + Nhập Tay
+            </button>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
+            <span id="meal-log-macro-line" class="text-slate-400 font-semibold">P: 0g • C: 0g • F: 0g</span>
+            <span id="meal-log-status-badge" class="font-bold text-emerald-400">Mục tiêu: 1,830 kcal</span>
+          </div>
+        </div>
+
+        <!-- Meals by Category for Selected Date -->
         <div id="meal-categories-container" class="space-y-3"></div>
+
+        <!-- Workouts Summary for Selected Date -->
+        <div id="log-day-workouts-card" class="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between pb-1.5 border-b border-slate-800 text-xs">
+            <span class="font-bold text-amber-400">⚡ Tập luyện trong ngày</span>
+            <span id="log-day-workouts-total" class="font-bold text-amber-400">-0 kcal</span>
+          </div>
+          <div id="log-day-workouts-list" class="space-y-1.5"></div>
+        </div>
       </div>
 
       <!-- Sub-view: AI COACH -->
@@ -1082,8 +1126,11 @@
       dailyDeficit: 520, tdee: 2350
     };
 
+    let allMealsStore = [];
+    let allWorkoutsStore = [];
     let todayMeals = [];
     let todayWorkouts = [];
+    let selectedLogDate = '';
     let customFoods = []; // Cách 3: User's saved custom & AI-looked-up foods
     let recentFoods = []; // Cách 3: User's recently logged foods
     let activeFoodCat = 'all';
@@ -1103,9 +1150,17 @@
     const KEY_CUSTOM_FOODS = 'nutri_pwa_custom_foods_v1';
     const KEY_RECENT_FOODS = 'nutri_pwa_recent_foods_v1';
 
-    function getTodayDateStr() {
-      const d = new Date();
+    function formatDateToKey(d) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function parseDateKey(str) {
+      const [y, m, d] = (str || getTodayDateStr()).split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1);
+    }
+
+    function getTodayDateStr() {
+      return formatDateToKey(new Date());
     }
 
     function getCurrentTimeStr() {
@@ -1113,17 +1168,61 @@
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
+    function formatFriendlyDateLabel(dateKey) {
+      const todayKey = getTodayDateStr();
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      const yestKey = formatDateToKey(yest);
+      const d = parseDateKey(dateKey);
+      const ddmm = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (dateKey === todayKey) return `Hôm nay (${ddmm})`;
+      if (dateKey === yestKey) return `Hôm qua (${ddmm})`;
+      const weekdays = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      return `${weekdays[d.getDay()]}, ${ddmm}/${d.getFullYear()}`;
+    }
+
+    function syncTodaySlices() {
+      const todayStr = getTodayDateStr();
+      todayMeals = allMealsStore.filter(item => item.date === todayStr);
+      todayWorkouts = allWorkoutsStore.filter(item => item.date === todayStr);
+    }
+
+    function setLogDate(dateStr) {
+      if (!dateStr) return;
+      selectedLogDate = dateStr;
+      refreshUI();
+    }
+
+    function shiftLogDate(deltaDays) {
+      const d = parseDateKey(selectedLogDate || getTodayDateStr());
+      d.setDate(d.getDate() + deltaDays);
+      selectedLogDate = formatDateToKey(d);
+      refreshUI();
+    }
+
+    function resetLogToToday() {
+      selectedLogDate = getTodayDateStr();
+      refreshUI();
+    }
+
+    function openAddFoodForSelectedDate() {
+      switchTab('camera');
+      setFoodMode('manual');
+      document.getElementById('manual-meal-date').value = selectedLogDate || getTodayDateStr();
+    }
+
     function loadSavedData() {
       try {
         const p = localStorage.getItem(KEY_PROFILE);
         if (p) profile = JSON.parse(p);
 
-        const todayStr = getTodayDateStr();
         const m = localStorage.getItem(KEY_MEALS);
-        if (m) todayMeals = JSON.parse(m).filter(item => item.date === todayStr);
+        if (m) allMealsStore = JSON.parse(m);
 
         const w = localStorage.getItem(KEY_WORKOUTS);
-        if (w) todayWorkouts = JSON.parse(w).filter(item => item.date === todayStr);
+        if (w) allWorkoutsStore = JSON.parse(w);
+
+        syncTodaySlices();
 
         const cf = localStorage.getItem(KEY_CUSTOM_FOODS);
         if (cf) customFoods = JSON.parse(cf);
@@ -1149,6 +1248,8 @@
         console.error(e);
       }
 
+      selectedLogDate = getTodayDateStr();
+      document.getElementById('manual-meal-date').value = selectedLogDate;
       document.getElementById('manual-meal-time').value = getCurrentTimeStr();
       updateFoodDbBadge();
       applySelectedManualFood(FOOD_DB_100G[0], false);
@@ -1261,12 +1362,70 @@
         `).join('');
       }
 
-      // 3. Meal Log Screen (With + Thêm, ✏️ Sửa, 🗑️ Xóa)
-      document.getElementById('meal-log-total-cal').innerText = `${totalIn.toLocaleString('vi-VN')} kcal`;
+      // 3. Meal Log Screen (Multi-Day History: Date Switcher, 7-Day Strip, Summary, Meals & Workouts)
+      const activeDate = selectedLogDate || getTodayDateStr();
+      const todayKey = getTodayDateStr();
+      const dayMeals = allMealsStore.filter(m => m.date === activeDate);
+      const dayWorkouts = allWorkoutsStore.filter(w => w.date === activeDate);
+      const dayCalIn = dayMeals.reduce((acc, m) => acc + (Number(m.calories) || 0), 0);
+      const dayBurned = dayWorkouts.reduce((acc, w) => acc + (Number(w.burnedKcal) || 0), 0);
+      const dayP = Math.round(dayMeals.reduce((acc, m) => acc + (Number(m.p) || 0), 0) * 10) / 10;
+      const dayC = Math.round(dayMeals.reduce((acc, m) => acc + (Number(m.c) || 0), 0) * 10) / 10;
+      const dayF = Math.round(dayMeals.reduce((acc, m) => acc + (Number(m.f) || 0), 0) * 10) / 10;
+
+      document.getElementById('log-date-label').innerText = formatFriendlyDateLabel(activeDate);
+      document.getElementById('log-date-picker').value = activeDate;
+      const todayBtn = document.getElementById('log-today-btn');
+      if (activeDate === todayKey) todayBtn.classList.add('hidden');
+      else todayBtn.classList.remove('hidden');
+
+      // Render 7-Day Quick Strip (ending on today or ending on activeDate if older)
+      const stripEl = document.getElementById('log-week-strip');
+      const endDate = activeDate > todayKey ? parseDateKey(activeDate) : parseDateKey(todayKey);
+      // If user picked a date older than 6 days ago, center strip around activeDate
+      const diffFromToday = Math.round((parseDateKey(todayKey) - parseDateKey(activeDate)) / 86400000);
+      const stripEnd = diffFromToday > 6 ? new Date(parseDateKey(activeDate).getTime() + 2 * 86400000) : endDate;
+      const wdShort = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      const datesWithData = new Set([...allMealsStore.map(m => m.date), ...allWorkoutsStore.map(w => w.date)]);
+      let stripHtml = '';
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(stripEnd);
+        d.setDate(stripEnd.getDate() - i);
+        const dKey = formatDateToKey(d);
+        const isSel = dKey === activeDate;
+        const isTod = dKey === todayKey;
+        const hasLog = datesWithData.has(dKey);
+        stripHtml += `
+          <button onclick="setLogDate('${dKey}')" class="py-1.5 rounded-xl flex flex-col items-center justify-center transition ${isSel ? 'bg-emerald-500 text-slate-950 font-black' : isTod ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-bold' : 'bg-slate-950 text-slate-400 border border-slate-800/80'}">
+            <span class="text-[9px] leading-none">${wdShort[d.getDay()]}</span>
+            <span class="text-xs mt-1 leading-none">${d.getDate()}</span>
+            <span class="w-1.5 h-1.5 rounded-full mt-1 ${hasLog ? (isSel ? 'bg-slate-950' : 'bg-emerald-400') : 'bg-transparent'}"></span>
+          </button>
+        `;
+      }
+      stripEl.innerHTML = stripHtml;
+
+      // Summary card for selected day
+      document.getElementById('meal-log-total-cal').innerText = `${dayCalIn.toLocaleString('vi-VN')} kcal`;
+      document.getElementById('meal-log-burned-cal').innerText = `⚡ -${dayBurned} kcal`;
+      document.getElementById('meal-log-macro-line').innerText = `P: ${dayP}g • C: ${dayC}g • F: ${dayF}g`;
+      const statusBadge = document.getElementById('meal-log-status-badge');
+      if (dayCalIn === 0) {
+        statusBadge.innerText = `Mục tiêu: ${targetCal.toLocaleString('vi-VN')} kcal`;
+        statusBadge.className = 'font-bold text-slate-400';
+      } else if (dayCalIn <= targetCal) {
+        statusBadge.innerText = `✅ Đạt (còn ${targetCal - dayCalIn} kcal)`;
+        statusBadge.className = 'font-bold text-emerald-400';
+      } else {
+        statusBadge.innerText = `⚠️ Vượt ${dayCalIn - targetCal} kcal`;
+        statusBadge.className = 'font-bold text-rose-400';
+      }
+
+      // Meals grouped by category for activeDate
       const catContainer = document.getElementById('meal-categories-container');
       const cats = ['Bữa Sáng', 'Bữa Trưa', 'Bữa Tối', 'Bữa Phụ'];
       catContainer.innerHTML = cats.map(cat => {
-        const cMeals = todayMeals.filter(m => (m.mealType || 'Bữa Trưa') === cat);
+        const cMeals = dayMeals.filter(m => (m.mealType || 'Bữa Trưa') === cat);
         const cCal = cMeals.reduce((acc, m) => acc + (Number(m.calories) || 0), 0);
         return `
           <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800">
@@ -1295,18 +1454,43 @@
           </div>
         `;
       }).join('');
+
+      // Workouts for selected day
+      document.getElementById('log-day-workouts-total').innerText = `-${dayBurned} kcal`;
+      const dayWList = document.getElementById('log-day-workouts-list');
+      if (dayWorkouts.length === 0) {
+        dayWList.innerHTML = '<p class="text-[10px] text-slate-500">Không có buổi tập nào trong ngày này.</p>';
+      } else {
+        dayWList.innerHTML = dayWorkouts.map(w => `
+          <div class="flex items-center justify-between text-xs pt-1">
+            <div class="flex items-center gap-2">
+              <span>${w.icon || '⚡'}</span>
+              <div>
+                <p class="font-bold text-slate-200">${w.title}</p>
+                <p class="text-[9px] text-slate-400">${w.duration} phút • ${w.time || ''}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-amber-400">-${w.burnedKcal} kcal</span>
+              <button onclick="deleteWebWorkout('${w.id}')" class="text-[9px] text-rose-400 block ml-auto">Xóa</button>
+            </div>
+          </div>
+        `).join('');
+      }
     }
 
     // ==================== MANUAL FOOD ENTRY + GRAM CONVERSION ====================
     function openAddFoodMode(mode) {
       switchTab('camera');
       setFoodMode(mode);
+      document.getElementById('manual-meal-date').value = getTodayDateStr();
     }
 
     function openManualForMealType(mealType) {
       switchTab('camera');
       setFoodMode('manual');
       setManualMealType(mealType);
+      document.getElementById('manual-meal-date').value = selectedLogDate || getTodayDateStr();
     }
 
     function setFoodMode(mode) {
@@ -1737,9 +1921,10 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
       const f100 = parseFloat(document.getElementById('custom-f100').value) || 0;
       const factor = weight / 100;
 
+      const mealDate = document.getElementById('manual-meal-date').value || selectedLogDate || getTodayDateStr();
       const newMeal = {
         id: Date.now().toString(),
-        date: getTodayDateStr(),
+        date: mealDate,
         time: document.getElementById('manual-meal-time').value || getCurrentTimeStr(),
         name,
         weightGrams: weight,
@@ -1752,10 +1937,10 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
         mealType: manualMealType
       };
 
-      todayMeals.unshift(newMeal);
-      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]');
-      allMeals.unshift(newMeal);
-      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+      allMealsStore.unshift(newMeal);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMealsStore));
+      syncTodaySlices();
+      selectedLogDate = mealDate;
 
       // Cách 3: Tự động ghi nhớ vào 🕒 Gần đây và ⭐ Của tôi (nếu là món mới / đã sửa định mức)
       pushRecentFood({ ...newMeal, defaultW: weight });
@@ -1765,14 +1950,14 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
       }
       renderFoodBrowser();
 
-      alert(`✅ Đã lưu "${name}" (${weight}${newMeal.unit === 'ml' ? 'ml' : 'g'} = ${newMeal.calories} kcal) vào ${manualMealType}!`);
+      alert(`✅ Đã lưu "${name}" (${weight}${newMeal.unit === 'ml' ? 'ml' : 'g'} = ${newMeal.calories} kcal) vào ${manualMealType} (${formatFriendlyDateLabel(mealDate)})!`);
       refreshUI();
       switchTab('meals');
     }
 
     // ==================== EDIT EXISTING MEAL MODAL ====================
     function openEditModal(id) {
-      const meal = todayMeals.find(m => m.id === id);
+      const meal = allMealsStore.find(m => m.id === id);
       if (!meal) return;
 
       const w = meal.weightGrams || 100;
@@ -1838,9 +2023,9 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
       updatedFields.c100 = Math.round((updatedFields.c / w) * 1000) / 10;
       updatedFields.f100 = Math.round((updatedFields.f / w) * 1000) / 10;
 
-      todayMeals = todayMeals.map(m => m.id === id ? { ...m, ...updatedFields } : m);
-      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]').map(m => m.id === id ? { ...m, ...updatedFields } : m);
-      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+      allMealsStore = allMealsStore.map(m => m.id === id ? { ...m, ...updatedFields } : m);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMealsStore));
+      syncTodaySlices();
 
       closeEditModal();
       refreshUI();
@@ -2077,10 +2262,11 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
         ...tempScanResult,
         mealType: selectedMealType
       };
-      todayMeals.unshift(newMeal);
-      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]');
-      allMeals.unshift(newMeal);
-      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+      allMealsStore.unshift(newMeal);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMealsStore));
+      syncTodaySlices();
+      selectedLogDate = newMeal.date;
+      pushRecentFood({ ...newMeal, defaultW: newMeal.weightGrams || 250 });
 
       alert(`✅ Đã lưu "${tempScanResult.name}" (${tempScanResult.calories} kcal) vào ${selectedMealType}!`);
       refreshUI();
@@ -2088,10 +2274,10 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
     }
 
     function deleteWebMeal(id) {
-      if (!confirm('Bạn có muốn xóa món này khỏi nhật ký hôm nay không?')) return;
-      todayMeals = todayMeals.filter(m => m.id !== id);
-      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]').filter(m => m.id !== id);
-      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+      if (!confirm('Bạn có muốn xóa món này khỏi nhật ký không?')) return;
+      allMealsStore = allMealsStore.filter(m => m.id !== id);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMealsStore));
+      syncTodaySlices();
       refreshUI();
     }
 
@@ -2128,10 +2314,9 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
         duration: dur,
         burnedKcal: burned
       };
-      todayWorkouts.unshift(newW);
-      const allW = JSON.parse(localStorage.getItem(KEY_WORKOUTS) || '[]');
-      allW.unshift(newW);
-      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(allW));
+      allWorkoutsStore.unshift(newW);
+      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(allWorkoutsStore));
+      syncTodaySlices();
 
       alert(`🔥 Đã lưu buổi ${currentActiveSport.title} (-${burned} kcal)!`);
       refreshUI();
@@ -2140,9 +2325,9 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
 
     function deleteWebWorkout(id) {
       if (!confirm('Bạn có muốn xóa bài tập này không?')) return;
-      todayWorkouts = todayWorkouts.filter(w => w.id !== id);
-      const allW = JSON.parse(localStorage.getItem(KEY_WORKOUTS) || '[]').filter(w => w.id !== id);
-      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(allW));
+      allWorkoutsStore = allWorkoutsStore.filter(w => w.id !== id);
+      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(allWorkoutsStore));
+      syncTodaySlices();
       refreshUI();
     }
 
@@ -2188,10 +2373,16 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
     }
 
     function exportJSONData() {
-      const fullData = { profile, todayMeals, todayWorkouts, exportAt: new Date().toISOString() };
+      const fullData = {
+        profile,
+        allMeals: allMealsStore,
+        allWorkouts: allWorkoutsStore,
+        customFoods,
+        exportAt: new Date().toISOString()
+      };
       const jsonStr = JSON.stringify(fullData, null, 2);
       navigator.clipboard.writeText(jsonStr).then(() => {
-        alert('📋 Đã sao chép toàn bộ dữ liệu vào bộ nhớ tạm! Bạn có thể dán gửi cho tôi để phân tích.');
+        alert('📋 Đã sao chép toàn bộ lịch sử tất cả các ngày vào bộ nhớ tạm! Bạn có thể dán lưu trữ hoặc gửi cho tôi phân tích.');
       }).catch(() => {
         alert(jsonStr.substring(0, 200) + '...');
       });
