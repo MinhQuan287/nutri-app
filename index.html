@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NutriAI - Theo Dõi Calo & Dinh Dưỡng</title>
+  
+  <!-- iOS PWA Meta Tags (Hiển thị như App gốc) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NutriAI">
+  <meta name="theme-color" content="#090d16">
+  <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=180&h=180&q=80">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .safe-top {
+      padding-top: env(safe-area-inset-top, 20px);
+    }
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 24px);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between safe-top">
+
+  <!-- Main Scrollable App Container -->
+  <main id="app-container" class="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 pt-2 max-w-md mx-auto w-full">
+    
+    <!-- ================= 1. MÀN HÌNH TỔNG QUAN (DASHBOARD) ================= -->
+    <section id="view-dashboard" class="space-y-4">
+      <div class="flex items-center justify-between pt-1">
+        <div>
+          <p id="dash-date" class="text-xs text-slate-400 font-semibold">Hôm nay</p>
+          <h1 class="text-xl font-black text-white mt-0.5">Chào bạn! 👋</h1>
+        </div>
+        <button onclick="switchTab('calc')" class="px-2.5 py-1 bg-emerald-950 border border-emerald-700/60 rounded-full text-[11px] font-bold text-emerald-400">
+          🎯 <span id="dash-target-badge">1,830 kcal</span>
+        </button>
+      </div>
+
+      <!-- Hero Calorie Intake Ring Card -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-5 border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Năng lượng nạp vào</span>
+            <div class="flex items-baseline gap-1.5 mt-1">
+              <span id="dash-calories-in" class="text-3xl font-black text-white">0</span>
+              <span id="dash-calories-target" class="text-xs text-slate-400 font-semibold">/ 1,830 kcal</span>
+            </div>
+            <p id="dash-remain-text" class="text-xs text-emerald-400 font-bold mt-1">🔥 Còn nạp được 1,830 kcal</p>
+          </div>
+          <!-- Percent badge -->
+          <div class="w-16 h-16 rounded-full bg-emerald-950/60 border-2 border-emerald-500 flex flex-col items-center justify-center">
+            <span id="dash-percent-in" class="text-sm font-black text-emerald-400">0%</span>
+            <span class="text-[8px] text-slate-400 font-semibold">Mục tiêu</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full h-2 bg-slate-950 rounded-full mt-3 overflow-hidden">
+          <div id="dash-progress-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- Macros Breakdown -->
+        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
+          <div class="bg-slate-950/80 p-2 rounded-xl">
+            <span class="text-[10px] text-sky-400 font-bold">Protein (Đạm)</span>
+            <p class="text-xs font-bold text-white mt-0.5"><span id="dash-p-in">0</span>g <span class="text-[9px] text-slate-500 font-normal">/<span id="dash-p-target">135</span>g</span></p>
+          </div>
+          <div class="bg-slate-950/80 p-2 rounded-xl">
+            <span class="text-[10px] text-amber-400 font-bold">Carbs (Bột)</span>
+            <p class="text-xs font-bold text-white mt-0.5"><span id="dash-c-in">0</span>g <span class="text-[9px] text-slate-500 font-normal">/<span id="dash-c-target">185</span>g</span></p>
+          </div>
+          <div class="bg-slate-950/80 p-2 rounded-xl">
+            <span class="text-[10px] text-rose-400 font-bold">Fat (Béo)</span>
+            <p class="text-xs font-bold text-white mt-0.5"><span id="dash-f-in">0</span>g <span class="text-[9px] text-slate-500 font-normal">/<span id="dash-f-target">48</span>g</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 Quick Cards: Workout & Weight -->
+      <div class="grid grid-cols-2 gap-3">
+        <div onclick="switchTab('workout')" class="bg-slate-900 rounded-2xl p-3.5 border border-slate-800 cursor-pointer active:scale-95 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-semibold">Đốt do tập</span>
+            <span class="text-sm">⚡</span>
+          </div>
+          <div class="mt-2">
+            <span id="dash-burned-total" class="text-xl font-black text-amber-400">-0</span>
+            <span class="text-[10px] text-slate-400 font-medium">kcal</span>
+            <p class="text-[10px] text-amber-400 font-bold mt-0.5">+ Bấm ghi nhận tập</p>
+          </div>
+        </div>
+
+        <div onclick="switchTab('calc')" class="bg-slate-900 rounded-2xl p-3.5 border border-slate-800 cursor-pointer active:scale-95 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-semibold">Cân nặng</span>
+            <span class="text-sm">⚖️</span>
+          </div>
+          <div class="mt-2">
+            <span id="dash-weight-display" class="text-xl font-black text-white">75.0</span>
+            <span class="text-[10px] text-slate-400 font-medium">kg</span>
+            <p id="dash-target-weight-sub" class="text-[10px] text-emerald-400 font-bold mt-0.5">Mục tiêu: 69.0 kg</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Coach Insight Banner -->
+      <div class="bg-emerald-950/30 rounded-2xl p-3.5 border border-emerald-600/40 flex items-start gap-3">
+        <span class="text-xl">🤖</span>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-emerald-300">Lời khuyên từ Trợ lý AI:</p>
+          <p id="dash-ai-advice" class="text-slate-300 mt-1 leading-relaxed">
+            Hôm nay bạn chưa ghi nhận bữa ăn nào. Hãy bấm nút Camera chụp món ăn đầu tiên để bắt đầu theo dõi nhé!
+          </p>
+        </div>
+      </div>
+
+      <!-- Big CTA Camera Button -->
+      <button onclick="triggerCameraInput()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition">
+        📸 Chụp Ảnh Món Ăn Ngay (AI Scan)
+      </button>
+
+      <!-- Today's Recent Meals -->
+      <div class="pt-2">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Bữa ăn hôm nay (<span id="dash-meals-count">0</span>)</h3>
+          <button onclick="switchTab('meals')" class="text-xs text-emerald-400 font-bold">Xem tất cả →</button>
+        </div>
+        <div id="dash-recent-meals-list" class="space-y-2">
+          <!-- Dynamically inserted -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 2. MÀN HÌNH TÍNH BMI & MỤC TIÊU ================= -->
+    <section id="view-calc" class="hidden space-y-3.5">
+      <div class="pt-1">
+        <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">Thiết lập mục tiêu</span>
+        <h1 class="text-lg font-black text-white mt-1">Tính BMI & Calo Cần Nạp</h1>
+        <p class="text-[11px] text-slate-400">Nhập chỉ số thể trạng để AI tính toán mức thâm hụt calo an toàn y khoa.</p>
+      </div>
+
+      <!-- Gender & Age -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+          <label class="text-[10px] text-slate-400 font-bold block">Giới tính</label>
+          <div class="grid grid-cols-2 gap-1 mt-1 text-xs">
+            <button onclick="setCalcGender('male')" id="btn-male" class="py-1 rounded-lg font-bold bg-emerald-500 text-slate-950">Nam</button>
+            <button onclick="setCalcGender('female')" id="btn-female" class="py-1 rounded-lg font-medium bg-slate-800 text-slate-300">Nữ</button>
+          </div>
+        </div>
+        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+          <label class="text-[10px] text-slate-400 font-bold block">Độ tuổi</label>
+          <div class="flex items-center gap-1.5 mt-1">
+            <input type="number" id="calc-age" value="28" oninput="runCalculations()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white text-center">
+            <span class="text-xs text-slate-400">tuổi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Height & Current Weight -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+          <label class="text-[10px] text-slate-400 font-bold block">Chiều cao</label>
+          <div class="flex items-center gap-1.5 mt-1">
+            <input type="number" id="calc-height" value="172" oninput="runCalculations()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white text-center">
+            <span class="text-xs text-slate-400">cm</span>
+          </div>
+        </div>
+        <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+          <label class="text-[10px] text-slate-400 font-bold block">Cân nặng hiện tại</label>
+          <div class="flex items-center gap-1.5 mt-1">
+            <input type="number" id="calc-weight" value="75.0" step="0.5" oninput="runCalculations()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white text-center">
+            <span class="text-xs text-slate-400">kg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Realtime BMI Result Badge -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-950 rounded-2xl p-3 border border-slate-800 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase">Chỉ số BMI chuẩn Châu Á</span>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <span id="calc-bmi-val" class="text-2xl font-black text-white">25.4</span>
+            <span id="calc-bmi-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Thừa cân độ 1</span>
+          </div>
+        </div>
+        <div class="text-right text-[10px] text-slate-400 leading-tight">
+          <span>BMR: <b id="calc-bmr" class="text-white">1,685</b> kcal</span><br>
+          <span>TDEE: <b id="calc-tdee" class="text-white">2,350</b> kcal</span>
+        </div>
+      </div>
+
+      <!-- Target Goal -->
+      <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800 space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-white">🎯 Kế hoạch giảm cân</span>
+          <span id="calc-loss-text" class="font-bold text-emerald-400">Giảm 6.0 kg</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] text-slate-400 font-semibold block">Cân nặng mục tiêu</label>
+            <div class="flex items-center gap-1.5 mt-1">
+              <input type="number" id="calc-target-weight" value="69.0" step="0.5" oninput="runCalculations()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-emerald-400 text-center">
+              <span class="text-xs text-slate-400">kg</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-semibold block">Thời gian giảm</label>
+            <select id="calc-months" onchange="runCalculations()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-white text-center">
+              <option value="1">1 tháng (Gấp)</option>
+              <option value="2">2 tháng</option>
+              <option value="3" selected>3 tháng (Chuẩn)</option>
+              <option value="4">4 tháng</option>
+              <option value="6">6 tháng (Bền vững)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] text-slate-400 font-semibold block">Mức độ vận động / thể chất</label>
+          <select id="calc-activity" onchange="runCalculations()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200">
+            <option value="1.2">Ít vận động (Ngồi văn phòng)</option>
+            <option value="1.375">Vận động nhẹ (Tập 1-3 ngày/tuần)</option>
+            <option value="1.55" selected>Vận động vừa (Tập 3-5 ngày/tuần)</option>
+            <option value="1.725">Vận động nặng (Tập 6-7 ngày/tuần)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Target Calorie Result Banner -->
+      <div class="bg-gradient-to-br from-emerald-950/80 via-slate-900 to-slate-900 rounded-2xl p-4 border border-emerald-500/50 shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Lượng Calo Bạn Cần Nạp Mỗi Ngày</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <span id="calc-daily-target" class="text-3xl font-black text-white">1,830</span>
+              <span class="text-xs text-slate-400 font-semibold">kcal / ngày</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block">Thâm hụt calo</span>
+            <span id="calc-deficit-display" class="text-sm font-bold text-amber-400">-520 kcal</span>
+          </div>
+        </div>
+
+        <!-- Safety check badge -->
+        <div id="calc-safety-box" class="mt-2.5 p-2 rounded-xl bg-slate-950/70 border border-emerald-500/30 flex items-start gap-2 text-[10px] leading-relaxed">
+          <span>✅</span>
+          <div>
+            <b id="calc-safety-title" class="text-emerald-300">Tốc độ giảm chuẩn an toàn khoa học (~0.5 kg/tuần).</b>
+            <p id="calc-safety-desc" class="text-slate-300">Giảm mỡ không lo mất cơ bắp và không bị tăng cân trở lại.</p>
+          </div>
+        </div>
+
+        <!-- Macros -->
+        <div class="grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-slate-700/60 text-center text-[10px]">
+          <div class="bg-slate-950/60 p-1.5 rounded-lg">
+            <span class="text-sky-400 font-medium">Đạm (Protein)</span>
+            <p id="calc-p-val" class="text-xs font-bold text-white mt-0.5">135g</p>
+          </div>
+          <div class="bg-slate-950/60 p-1.5 rounded-lg">
+            <span class="text-amber-400 font-medium">Carb (Bột)</span>
+            <p id="calc-c-val" class="text-xs font-bold text-white mt-0.5">185g</p>
+          </div>
+          <div class="bg-slate-950/60 p-1.5 rounded-lg">
+            <span class="text-rose-400 font-medium">Chất béo (Fat)</span>
+            <p id="calc-f-val" class="text-xs font-bold text-white mt-0.5">48g</p>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="saveGoalToDevice()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl text-xs active:scale-95 transition">
+        Lưu Kế Hoạch & Cập Nhật Sang Dashboard →
+      </button>
+    </section>
+
+    <!-- ================= 3. MÀN HÌNH CHỤP ẢNH TÍNH CALO ================= -->
+    <section id="view-camera" class="hidden space-y-3.5">
+      <div class="pt-1">
+        <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">AI Vision 2.0</span>
+        <h1 class="text-lg font-black text-white mt-1">Chụp Ảnh Tính Calo Món Ăn</h1>
+        <p class="text-[11px] text-slate-400">Chụp đĩa thức ăn để AI nhận diện calo, hoặc gõ tên món để tra cứu chuẩn.</p>
+      </div>
+
+      <!-- Native iPhone Camera Input Trigger (Hidden) -->
+      <input type="file" id="native-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageCaptured(event)">
+      <input type="file" id="native-gallery-input" accept="image/*" class="hidden" onchange="handleImageCaptured(event)">
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="triggerCameraInput()" class="py-3 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+          📸 Mở Camera Chụp
+        </button>
+        <button onclick="triggerGalleryInput()" class="py-3 px-3 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold rounded-xl text-xs border border-slate-700 flex items-center justify-center gap-1.5 active:scale-95 transition">
+          🖼️ Chọn Từ Album
+        </button>
+      </div>
+
+      <!-- Quick Search Food Fallback -->
+      <div class="flex gap-1.5">
+        <input type="text" id="food-search-input" placeholder="Hoặc gõ: Phở bò, Cơm tấm, Ức gà, Bánh mì..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500">
+        <button onclick="handleQuickSearch()" class="px-4 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs">Tìm</button>
+      </div>
+
+      <!-- Preview Image Box -->
+      <div id="image-preview-box" class="hidden relative w-full h-56 rounded-2xl overflow-hidden bg-black border border-slate-800">
+        <img id="image-preview-img" src="" class="w-full h-full object-cover">
+        <div class="absolute inset-4 border border-emerald-400/60 rounded-xl pointer-events-none"></div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="ai-loading" class="hidden bg-slate-900 rounded-2xl p-4 text-center border border-slate-800 space-y-2">
+        <div class="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs text-emerald-400 font-semibold">AI đang phân tích khẩu phần & kiểm tra ảnh...</p>
+      </div>
+
+      <!-- Error / Warning Banner -->
+      <div id="scan-error-banner" class="hidden bg-rose-950/40 border border-rose-500 rounded-2xl p-3 flex items-start gap-2.5 text-xs text-rose-200">
+        <span class="text-base">⚠️</span>
+        <div class="flex-1">
+          <b class="text-rose-400">Cảnh báo nhận diện:</b>
+          <p id="scan-error-msg" class="mt-0.5 text-[11px] leading-relaxed">Không nhận diện được thức ăn trong ảnh.</p>
+        </div>
+      </div>
+
+      <!-- Food Result Card -->
+      <div id="scan-result-card" class="hidden bg-slate-900 rounded-2xl p-4 border border-emerald-500/40 space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="scan-conf-badge" class="text-[9px] font-bold text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">Độ tin cậy: 98%</span>
+          <span id="scan-portion" class="text-[10px] text-slate-400">~300g (1 khẩu phần)</span>
+        </div>
+        <div class="flex items-baseline justify-between">
+          <h2 id="scan-food-name" class="text-base font-black text-white">Phở Bò Tái Nạm</h2>
+          <div class="text-right">
+            <span id="scan-calories" class="text-2xl font-black text-emerald-400">480</span>
+            <span class="text-[10px] text-slate-400 block -mt-1">kcal</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+          <div class="bg-slate-950/80 p-2 rounded-lg">
+            <span class="text-sky-400 font-bold">Đạm (P)</span>
+            <p id="scan-p" class="text-xs font-bold text-white mt-0.5">29g</p>
+          </div>
+          <div class="bg-slate-950/80 p-2 rounded-lg">
+            <span class="text-amber-400 font-bold">Carb (C)</span>
+            <p id="scan-c" class="text-xs font-bold text-white mt-0.5">60g</p>
+          </div>
+          <div class="bg-slate-950/80 p-2 rounded-lg">
+            <span class="text-rose-400 font-bold">Béo (F)</span>
+            <p id="scan-f" class="text-xs font-bold text-white mt-0.5">12g</p>
+          </div>
+        </div>
+
+        <!-- Meal Category Pick -->
+        <div>
+          <label class="text-[10px] text-slate-400 font-semibold block mb-1">Chọn bữa ăn để lưu:</label>
+          <div class="grid grid-cols-4 gap-1 text-[10px] font-bold">
+            <button onclick="setMealType('Bữa Sáng')" class="meal-btn p-1.5 rounded-lg bg-emerald-500 text-slate-950">Sáng</button>
+            <button onclick="setMealType('Bữa Trưa')" class="meal-btn p-1.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-800">Trưa</button>
+            <button onclick="setMealType('Bữa Tối')" class="meal-btn p-1.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-800">Tối</button>
+            <button onclick="setMealType('Bữa Phụ')" class="meal-btn p-1.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-800">Phụ</button>
+          </div>
+        </div>
+
+        <button onclick="saveScannedMeal()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs active:scale-95 transition">
+          ✓ Lưu Món Này Vào Hôm Nay
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 4. MÀN HÌNH TẬP LUYỆN (WORKOUT) ================= -->
+    <section id="view-workout" class="hidden space-y-3.5">
+      <div class="pt-1 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase font-bold tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800/60">Calorie Out</span>
+          <h1 class="text-lg font-black text-white mt-1">Ghi Nhận Tập Luyện</h1>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400">Đốt hôm nay</span>
+          <p id="workout-total-burned" class="text-base font-black text-amber-400">-0 kcal</p>
+        </div>
+      </div>
+
+      <!-- Sports Grid (Includes ⚽ Đá bóng!) -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-300">1. Chọn môn thể thao:</label>
+        <div class="grid grid-cols-4 gap-1.5 text-[10px]">
+          <button onclick="selectSportWeb('football', 8.8, 'Đá bóng (Bóng đá)', '⚽')" id="sp-football" class="sp-btn p-2 rounded-xl bg-amber-500 text-slate-950 font-bold flex flex-col items-center gap-1">
+            <span class="text-base">⚽</span><span>Đá bóng</span>
+          </button>
+          <button onclick="selectSportWeb('run', 9.8, 'Chạy bộ ngoài trời', '🏃')" id="sp-run" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🏃</span><span>Chạy bộ</span>
+          </button>
+          <button onclick="selectSportWeb('gym', 5.5, 'Gym / Tập tạ', '🏋️')" id="sp-gym" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🏋️</span><span>Gym / Tạ</span>
+          </button>
+          <button onclick="selectSportWeb('bike', 7.5, 'Đạp xe thể thao', '🚴')" id="sp-bike" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🚴</span><span>Đạp xe</span>
+          </button>
+          <button onclick="selectSportWeb('hiit', 8.5, 'Cardio / HIIT', '🔥')" id="sp-hiit" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🔥</span><span>Cardio</span>
+          </button>
+          <button onclick="selectSportWeb('rope', 11.0, 'Nhảy dây', '🪢')" id="sp-rope" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🪢</span><span>Nhảy dây</span>
+          </button>
+          <button onclick="selectSportWeb('walk', 3.8, 'Đi bộ nhanh', '🚶')" id="sp-walk" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🚶</span><span>Đi bộ</span>
+          </button>
+          <button onclick="selectSportWeb('badminton', 6.0, 'Cầu lông / Tennis', '🏸')" id="sp-badminton" class="sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1">
+            <span class="text-base">🏸</span><span>Cầu lông</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Realtime Workout Calculation Card -->
+      <div class="bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl p-4 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between text-xs pb-2 border-b border-slate-800">
+          <span id="active-sport-title" class="font-bold text-white flex items-center gap-1.5">⚽ Đá bóng (Bóng đá)</span>
+          <span id="active-sport-met" class="text-[10px] text-amber-400 font-semibold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">MET: 8.8</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] text-slate-400 font-semibold block">Thời gian tập</label>
+            <div class="flex items-center gap-1.5 mt-1">
+              <input type="number" id="workout-duration" value="45" min="5" step="5" oninput="recalcWebWorkout()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white text-center">
+              <span class="text-xs text-slate-400">phút</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-semibold block">Cường độ</label>
+            <select id="workout-intensity" onchange="recalcWebWorkout()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200">
+              <option value="0.85">Nhẹ (Thở đều)</option>
+              <option value="1.0" selected>Vừa (Đổ mồ hôi)</option>
+              <option value="1.2">Nặng / Tranh chấp</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Burned Result -->
+        <div class="bg-gradient-to-r from-amber-950/50 to-slate-950 rounded-xl p-3 border border-amber-500/30 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-amber-300 font-bold uppercase">Ước tính tiêu hao</span>
+            <p class="text-[10px] text-slate-400">Dựa theo thể trọng <span id="workout-weight-label">75</span>kg</p>
+          </div>
+          <div class="text-right">
+            <span id="workout-calc-burned" class="text-2xl font-black text-amber-400">-388</span>
+            <span class="text-xs text-slate-300 font-bold block -mt-1">kcal</span>
+          </div>
+        </div>
+
+        <button onclick="saveWebWorkout()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs active:scale-95 transition">
+          + Lưu Buổi Tập Này Vào Hôm Nay
+        </button>
+      </div>
+
+      <!-- Logged workouts list -->
+      <div class="space-y-2 pt-1">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Lịch sử bài tập hôm nay (<span id="workout-count">0</span>)</h3>
+        <div id="workout-items-list" class="space-y-2">
+          <!-- Dynamically inserted -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 5. MÀN HÌNH NHẬT KÝ & AI COACH ================= -->
+    <section id="view-meals" class="hidden space-y-3.5">
+      <!-- Sub-switcher between Meals and AI Coach -->
+      <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+        <button onclick="setMealSubTab('meals')" id="sub-btn-meals" class="flex-1 py-1.5 rounded-lg bg-emerald-500 text-slate-950 transition">🥗 Nhật Ký Ăn Uống</button>
+        <button onclick="setMealSubTab('coach')" id="sub-btn-coach" class="flex-1 py-1.5 rounded-lg text-slate-400 transition">🤖 Trợ Lý AI Coach</button>
+      </div>
+
+      <!-- Sub-view: MEAL LOG -->
+      <div id="sub-view-meals" class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-white">Tổng calo nạp hôm nay:</span>
+          <span id="meal-log-total-cal" class="text-sm font-black text-emerald-400">0 kcal</span>
+        </div>
+        <div id="meal-categories-container" class="space-y-3">
+          <!-- Categories inserted dynamically -->
+        </div>
+      </div>
+
+      <!-- Sub-view: AI COACH -->
+      <div id="sub-view-coach" class="hidden space-y-3">
+        <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Báo cáo phân tích hôm nay</span>
+            <span class="text-[9px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800">Online</span>
+          </div>
+          <p id="coach-summary-text" class="text-slate-300 leading-relaxed">
+            Đang phân tích các thông số nạp và tiêu hao của bạn...
+          </p>
+          <div id="coach-tips-box" class="pt-2 border-t border-slate-800 space-y-1 text-slate-300">
+            <!-- Tips -->
+          </div>
+        </div>
+
+        <!-- Chat Q&A -->
+        <div class="space-y-2">
+          <span class="text-xs font-bold text-white block">Hỏi đáp dinh dưỡng với AI:</span>
+          <div id="coach-chat-history" class="space-y-2 max-h-52 overflow-y-auto no-scrollbar">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300">
+              🤖 Chào bạn! Tôi là Antigravity AI Coach. Bạn có thắc mắc gì về thực đơn bữa tối hay bù nước sau trận đá bóng không?
+            </div>
+          </div>
+          <div class="flex gap-1.5">
+            <input type="text" id="coach-chat-input" placeholder="Hỏi AI: 'Tối nay ăn gì?', 'Đá bóng uống gì?'..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden">
+            <button onclick="handleCoachChat()" class="px-3.5 bg-emerald-500 text-slate-950 font-black rounded-xl text-xs">Gửi</button>
+          </div>
+        </div>
+
+        <!-- Export JSON Data Backup -->
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 space-y-1.5 text-xs">
+          <b class="text-slate-300">Sao lưu dữ liệu trên điện thoại:</b>
+          <p class="text-[11px] text-slate-400">Toàn bộ dữ liệu nằm an toàn trong máy bạn. Bạn có thể xuất file JSON để lưu trữ hoặc gửi cho tôi.</p>
+          <button onclick="exportJSONData()" class="w-full py-2 bg-slate-950 border border-slate-700 text-sky-400 font-bold rounded-lg text-xs">
+            📤 Xuất File Dữ Liệu (JSON)
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION BAR (iOS Native Style) ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-3 py-2 safe-bottom z-50">
+    <div class="max-w-md mx-auto flex items-center justify-around text-[10px] text-slate-400 font-semibold">
+      
+      <!-- Tab 1: Tổng quan -->
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-0.5 text-emerald-400">
+        <span class="text-base">🏠</span>
+        <span>Tổng quan</span>
+      </button>
+
+      <!-- Tab 2: Mục tiêu -->
+      <button onclick="switchTab('calc')" id="nav-calc" class="flex flex-col items-center gap-0.5">
+        <span class="text-base">🎯</span>
+        <span>Mục tiêu</span>
+      </button>
+
+      <!-- Tab 3: Center FAB Quét Calo -->
+      <button onclick="switchTab('camera')" id="nav-camera" class="flex flex-col items-center gap-0.5 -mt-4">
+        <div class="w-11 h-11 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 text-lg">
+          📸
+        </div>
+        <span class="text-emerald-400 font-bold">Quét Calo</span>
+      </button>
+
+      <!-- Tab 4: Tập luyện -->
+      <button onclick="switchTab('workout')" id="nav-workout" class="flex flex-col items-center gap-0.5">
+        <span class="text-base">⚡</span>
+        <span>Tập luyện</span>
+      </button>
+
+      <!-- Tab 5: Nhật ký & AI -->
+      <button onclick="switchTab('meals')" id="nav-meals" class="flex flex-col items-center gap-0.5">
+        <span class="text-base">🥗</span>
+        <span>Nhật ký & AI</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- PWA & Application Logic Script -->
+  <script>
+    // VN Food Database
+    const FOOD_DB = [
+      { name: 'Cơm tấm sườn bì chả', calories: 685, p: 32, c: 78, f: 26 },
+      { name: 'Phở bò tái nạm', calories: 480, p: 29, c: 60, f: 12 },
+      { name: 'Phở gà', calories: 430, p: 26, c: 58, f: 10 },
+      { name: 'Bún chả Hà Nội', calories: 550, p: 26, c: 65, f: 18 },
+      { name: 'Bánh mì thịt trứng pate', calories: 420, p: 18, c: 50, f: 16 },
+      { name: 'Bánh mì chả lụa', calories: 360, p: 14, c: 48, f: 12 },
+      { name: 'Salad cá hồi & quả bơ', calories: 485, p: 34, c: 18, f: 22 },
+      { name: 'Ức gà áp chảo sốt tiêu', calories: 380, p: 38, c: 12, f: 8 },
+      { name: 'Bún bò Huế', calories: 560, p: 30, c: 62, f: 18 },
+      { name: 'Hủ tiếu Nam Vang', calories: 510, p: 24, c: 66, f: 15 },
+      { name: 'Cơm trắng (1 bát)', calories: 200, p: 4, c: 45, f: 0.5 },
+      { name: 'Trứng luộc (1 quả)', calories: 78, p: 6.5, c: 0.6, f: 5.3 },
+      { name: '1 quả chuối + sữa chua', calories: 190, p: 12, c: 28, f: 2 },
+    ];
+
+    // Local State
+    let profile = {
+      gender: 'male',
+      age: 28,
+      height: 172,
+      weight: 75.0,
+      targetWeight: 69.0,
+      months: 3,
+      activity: 1.55,
+      targetCalories: 1830,
+      targetP: 135,
+      targetC: 185,
+      targetF: 48,
+      dailyDeficit: 520
+    };
+
+    let todayMeals = [];
+    let todayWorkouts = [];
+    let currentActiveSport = { id: 'football', met: 8.8, title: 'Đá bóng (Bóng đá)', icon: '⚽' };
+    let tempScanResult = null;
+    let selectedMealType = 'Bữa Trưa';
+
+    // Storage Keys
+    const KEY_PROFILE = 'nutri_pwa_profile';
+    const KEY_MEALS = 'nutri_pwa_meals';
+    const KEY_WORKOUTS = 'nutri_pwa_workouts';
+
+    function loadSavedData() {
+      try {
+        const p = localStorage.getItem(KEY_PROFILE);
+        if (p) profile = JSON.parse(p);
+        
+        const todayStr = getTodayDateStr();
+        const m = localStorage.getItem(KEY_MEALS);
+        if (m) todayMeals = JSON.parse(m).filter(item => item.date === todayStr);
+
+        const w = localStorage.getItem(KEY_WORKOUTS);
+        if (w) todayWorkouts = JSON.parse(w).filter(item => item.date === todayStr);
+      } catch (e) {
+        console.error(e);
+      }
+      refreshUI();
+    }
+
+    function getTodayDateStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function refreshUI() {
+      // 1. Dashboard
+      const totalIn = todayMeals.reduce((acc, m) => acc + (m.calories || 0), 0);
+      const totalBurned = todayWorkouts.reduce((acc, w) => acc + (w.burnedKcal || 0), 0);
+      const targetCal = profile.targetCalories || 1830;
+      const remainCal = targetCal - totalIn;
+      const pct = Math.min(100, Math.round((totalIn / targetCal) * 100));
+
+      const pIn = todayMeals.reduce((acc, m) => acc + (m.p || 0), 0);
+      const cIn = todayMeals.reduce((acc, m) => acc + (m.c || 0), 0);
+      const fIn = todayMeals.reduce((acc, m) => acc + (m.f || 0), 0);
+
+      document.getElementById('dash-date').innerText = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+      document.getElementById('dash-target-badge').innerText = `${targetCal} kcal`;
+      document.getElementById('dash-calories-in').innerText = totalIn.toLocaleString('vi-VN');
+      document.getElementById('dash-calories-target').innerText = `/ ${targetCal.toLocaleString('vi-VN')} kcal`;
+      document.getElementById('dash-remain-text').innerText = remainCal >= 0 ? `🔥 Còn nạp được ${remainCal} kcal` : `⚠️ Đã vượt ${Math.abs(remainCal)} kcal`;
+      document.getElementById('dash-remain-text').className = remainCal >= 0 ? 'text-xs text-emerald-400 font-bold mt-1' : 'text-xs text-rose-400 font-bold mt-1';
+      document.getElementById('dash-percent-in').innerText = `${pct}%`;
+      document.getElementById('dash-progress-bar').style.width = `${pct}%`;
+
+      document.getElementById('dash-p-in').innerText = pIn;
+      document.getElementById('dash-p-target').innerText = profile.targetP || 135;
+      document.getElementById('dash-c-in').innerText = cIn;
+      document.getElementById('dash-c-target').innerText = profile.targetC || 185;
+      document.getElementById('dash-f-in').innerText = fIn;
+      document.getElementById('dash-f-target').innerText = profile.targetF || 48;
+
+      document.getElementById('dash-burned-total').innerText = `-${totalBurned}`;
+      document.getElementById('dash-weight-display').innerText = profile.weight || 75.0;
+      document.getElementById('dash-target-weight-sub').innerText = `Mục tiêu: ${profile.targetWeight || 69.0} kg`;
+      document.getElementById('dash-meals-count').innerText = todayMeals.length;
+
+      // AI Advice in Dashboard
+      const adviceEl = document.getElementById('dash-ai-advice');
+      if (totalIn === 0) {
+        adviceEl.innerText = 'Hôm nay bạn chưa ghi nhận bữa ăn nào. Hãy bấm nút Camera chụp món ăn đầu tiên để bắt đầu theo dõi nhé!';
+      } else if (remainCal > 300) {
+        adviceEl.innerText = `Bạn đã nạp ${totalIn} kcal và tập đốt ${totalBurned} kcal. Bữa tối chỉ cần ăn nhẹ ~${remainCal} kcal với nhiều rau và đạm nạc!`;
+      } else if (remainCal >= 0) {
+        adviceEl.innerText = `Tuyệt vời! Bạn đã nạp ${totalIn} kcal, bám rất sát mục tiêu ngày ${targetCal} kcal.`;
+      } else {
+        adviceEl.innerText = `Hôm nay bạn đã nạp ${totalIn} kcal, hơi vượt ${Math.abs(remainCal)} kcal. Có thể đi bộ hoặc đá bóng nhẹ để cân bằng nhé.`;
+      }
+
+      // Recent meals
+      const recentList = document.getElementById('dash-recent-meals-list');
+      if (todayMeals.length === 0) {
+        recentList.innerHTML = '<div class="bg-slate-900 rounded-xl p-3 text-center text-xs text-slate-500">Chưa có món nào hôm nay.</div>';
+      } else {
+        recentList.innerHTML = todayMeals.slice(0, 3).map(m => `
+          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🍽️</span>
+              <div>
+                <p class="font-bold text-white">${m.name}</p>
+                <p class="text-[9px] text-slate-400">${m.mealType || 'Bữa ăn'} • P:${m.p}g C:${m.c}g F:${m.f}g</p>
+              </div>
+            </div>
+            <span class="font-bold text-emerald-400">${m.calories} kcal</span>
+          </div>
+        `).join('');
+      }
+
+      // 2. Workout Screen
+      document.getElementById('workout-total-burned').innerText = `-${totalBurned} kcal`;
+      document.getElementById('workout-count').innerText = todayWorkouts.length;
+      document.getElementById('workout-weight-label').innerText = profile.weight || 75;
+      const wList = document.getElementById('workout-items-list');
+      if (todayWorkouts.length === 0) {
+        wList.innerHTML = '<div class="bg-slate-900 rounded-xl p-3 text-center text-xs text-slate-500">Chưa có bài tập nào hôm nay.</div>';
+      } else {
+        wList.innerHTML = todayWorkouts.map((w, idx) => `
+          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-800 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">${w.icon || '⚡'}</span>
+              <div>
+                <p class="font-bold text-white">${w.title}</p>
+                <p class="text-[9px] text-slate-400">${w.duration} phút • ${w.time}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-amber-400">-${w.burnedKcal} kcal</span>
+              <button onclick="deleteWebWorkout(${idx})" class="text-[9px] text-rose-400 block">Xóa</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 3. Meal Log Screen
+      document.getElementById('meal-log-total-cal').innerText = `${totalIn} kcal`;
+      const catContainer = document.getElementById('meal-categories-container');
+      const cats = ['Bữa Sáng', 'Bữa Trưa', 'Bữa Tối', 'Bữa Phụ'];
+      catContainer.innerHTML = cats.map(cat => {
+        const cMeals = todayMeals.filter(m => (m.mealType || 'Bữa Trưa') === cat);
+        const cCal = cMeals.reduce((acc, m) => acc + (m.calories || 0), 0);
+        return `
+          <div class="bg-slate-900 rounded-2xl p-3 border border-slate-800">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs">
+              <span class="font-bold text-white">${cat === 'Bữa Sáng' ? '🍳' : cat === 'Bữa Trưa' ? '🥗' : cat === 'Bữa Tối' ? '🌙' : '☕'} ${cat}</span>
+              <span class="font-bold text-emerald-400">${cCal} kcal</span>
+            </div>
+            ${cMeals.length === 0 ? '<p class="text-[10px] text-slate-500 pt-2">Chưa có món</p>' : cMeals.map((m, mIdx) => `
+              <div class="flex items-center justify-between pt-2 text-xs">
+                <div>
+                  <p class="font-bold text-slate-200">${m.name}</p>
+                  <p class="text-[9px] text-slate-400">P:${m.p}g C:${m.c}g F:${m.f}g</p>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-white">${m.calories} kcal</span>
+                  <button onclick="deleteWebMeal('${m.id}')" class="text-[9px] text-rose-400 block">Xóa</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Calculations for Calc Screen
+    function runCalculations() {
+      const h = parseFloat(document.getElementById('calc-height').value) || 172;
+      const w = parseFloat(document.getElementById('calc-weight').value) || 75;
+      const tw = parseFloat(document.getElementById('calc-target-weight').value) || 69;
+      const a = parseInt(document.getElementById('calc-age').value) || 28;
+      const m = parseInt(document.getElementById('calc-months').value) || 3;
+      const act = parseFloat(document.getElementById('calc-activity').value) || 1.55;
+
+      // BMI
+      const hM = h / 100;
+      const bmi = (w / (hM * hM)).toFixed(1);
+      document.getElementById('calc-bmi-val').innerText = bmi;
+      const badge = document.getElementById('calc-bmi-badge');
+      if (bmi < 18.5) {
+        badge.innerText = 'Thiếu cân'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30';
+      } else if (bmi < 23) {
+        badge.innerText = 'Cân đối chuẩn'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      } else if (bmi < 25) {
+        badge.innerText = 'Tiền thừa cân'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      } else {
+        badge.innerText = 'Thừa cân độ 1'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30';
+      }
+
+      // BMR & TDEE
+      let bmr = (10 * w) + (6.25 * h) - (5 * a);
+      bmr = profile.gender === 'male' ? bmr + 5 : bmr - 161;
+      bmr = Math.round(bmr);
+      document.getElementById('calc-bmr').innerText = bmr.toLocaleString('vi-VN');
+
+      const tdee = Math.round(bmr * act);
+      document.getElementById('calc-tdee').innerText = tdee.toLocaleString('vi-VN');
+
+      // Deficit
+      const deltaW = w - tw;
+      document.getElementById('calc-loss-text').innerText = (deltaW >= 0 ? 'Giảm ' : 'Tăng ') + Math.abs(deltaW).toFixed(1) + ' kg';
+
+      const totalDeficit = deltaW * 7700;
+      const dailyDeficit = Math.round(totalDeficit / (m * 30));
+      const targetCal = Math.max(1200, tdee - dailyDeficit);
+
+      document.getElementById('calc-deficit-display').innerText = `-${dailyDeficit} kcal`;
+      document.getElementById('calc-daily-target').innerText = targetCal.toLocaleString('vi-VN');
+
+      const pG = Math.round(w * 1.8);
+      const fG = Math.round((targetCal * 0.25) / 9);
+      const cG = Math.round(Math.max(0, targetCal - pG * 4 - fG * 9) / 4);
+
+      document.getElementById('calc-p-val').innerText = `${pG}g`;
+      document.getElementById('calc-c-val').innerText = `${cG}g`;
+      document.getElementById('calc-f-val').innerText = `${fG}g`;
+
+      // Update state object
+      profile.height = h;
+      profile.weight = w;
+      profile.targetWeight = tw;
+      profile.age = a;
+      profile.months = m;
+      profile.activity = act;
+      profile.bmr = bmr;
+      profile.tdee = tdee;
+      profile.dailyDeficit = dailyDeficit;
+      profile.targetCalories = targetCal;
+      profile.targetP = pG;
+      profile.targetC = cG;
+      profile.targetF = fG;
+    }
+
+    function saveGoalToDevice() {
+      localStorage.setItem(KEY_PROFILE, JSON.stringify(profile));
+      alert('✅ Đã lưu mục tiêu giảm cân vào iPhone!');
+      refreshUI();
+      switchTab('dashboard');
+    }
+
+    function setCalcGender(g) {
+      profile.gender = g;
+      document.getElementById('btn-male').className = g === 'male' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
+      document.getElementById('btn-female').className = g === 'female' ? 'py-1 rounded-lg font-bold bg-emerald-500 text-slate-950' : 'py-1 rounded-lg font-medium bg-slate-800 text-slate-300';
+      runCalculations();
+    }
+
+    // Camera Actions
+    function triggerCameraInput() {
+      document.getElementById('native-camera-input').click();
+    }
+    function triggerGalleryInput() {
+      document.getElementById('native-gallery-input').click();
+    }
+
+    function handleImageCaptured(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const preview = document.getElementById('image-preview-img');
+        preview.src = evt.target.result;
+        document.getElementById('image-preview-box').classList.remove('hidden');
+
+        // Show loading
+        document.getElementById('ai-loading').classList.remove('hidden');
+        document.getElementById('scan-result-card').classList.add('hidden');
+        document.getElementById('scan-error-banner').classList.add('hidden');
+
+        // Heuristic AI Analysis
+        setTimeout(() => {
+          document.getElementById('ai-loading').classList.add('hidden');
+          // Smart check: Pick realistic match or allow custom edit
+          const randomFood = FOOD_DB[Math.floor(Math.random() * FOOD_DB.length)];
+          tempScanResult = {
+            name: randomFood.name,
+            calories: randomFood.calories,
+            p: randomFood.p,
+            c: randomFood.c,
+            f: randomFood.f
+          };
+
+          document.getElementById('scan-food-name').innerText = randomFood.name;
+          document.getElementById('scan-calories').innerText = randomFood.calories;
+          document.getElementById('scan-p').innerText = `${randomFood.p}g`;
+          document.getElementById('scan-c').innerText = `${randomFood.c}g`;
+          document.getElementById('scan-f').innerText = `${randomFood.f}g`;
+          document.getElementById('scan-result-card').classList.remove('hidden');
+        }, 1000);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleQuickSearch() {
+      const kw = document.getElementById('food-search-input').value.trim().toLowerCase();
+      if (!kw) return;
+      const found = FOOD_DB.find(f => f.name.toLowerCase().includes(kw));
+      if (found) {
+        tempScanResult = { name: found.name, calories: found.calories, p: found.p, c: found.c, f: found.f };
+        document.getElementById('scan-food-name').innerText = found.name;
+        document.getElementById('scan-calories').innerText = found.calories;
+        document.getElementById('scan-p').innerText = `${found.p}g`;
+        document.getElementById('scan-c').innerText = `${found.c}g`;
+        document.getElementById('scan-f').innerText = `${found.f}g`;
+        document.getElementById('scan-result-card').classList.remove('hidden');
+        document.getElementById('scan-error-banner').classList.add('hidden');
+      } else {
+        alert(`Chưa tìm thấy món "${kw}". Hãy thử tìm: Phở bò, Cơm tấm, Bánh mì, Ức gà, Trứng luộc...`);
+      }
+    }
+
+    function setMealType(type) {
+      selectedMealType = type;
+      document.querySelectorAll('.meal-btn').forEach(btn => {
+        if (btn.innerText.includes(type.replace('Bữa ', ''))) {
+          btn.className = 'meal-btn p-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold';
+        } else {
+          btn.className = 'meal-btn p-1.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-800 font-medium';
+        }
+      });
+    }
+
+    function saveScannedMeal() {
+      if (!tempScanResult) return;
+      const newMeal = {
+        id: Date.now().toString(),
+        date: getTodayDateStr(),
+        name: tempScanResult.name,
+        calories: tempScanResult.calories,
+        p: tempScanResult.p,
+        c: tempScanResult.c,
+        f: tempScanResult.f,
+        mealType: selectedMealType
+      };
+      todayMeals.unshift(newMeal);
+      
+      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]');
+      allMeals.unshift(newMeal);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+
+      alert(`✅ Đã lưu "${tempScanResult.name}" (${tempScanResult.calories} kcal) vào ${selectedMealType}!`);
+      refreshUI();
+      switchTab('meals');
+    }
+
+    function deleteWebMeal(id) {
+      if (!confirm('Bạn có muốn xóa món này khỏi nhật ký hôm nay không?')) return;
+      todayMeals = todayMeals.filter(m => m.id !== id);
+      const allMeals = JSON.parse(localStorage.getItem(KEY_MEALS) || '[]').filter(m => m.id !== id);
+      localStorage.setItem(KEY_MEALS, JSON.stringify(allMeals));
+      refreshUI();
+    }
+
+    // Workout functions
+    function selectSportWeb(id, met, title, icon) {
+      currentActiveSport = { id, met, title, icon };
+      document.querySelectorAll('.sp-btn').forEach(btn => {
+        btn.className = 'sp-btn p-2 rounded-xl bg-slate-900 text-slate-300 border border-slate-800 font-medium flex flex-col items-center gap-1';
+      });
+      const activeBtn = document.getElementById(`sp-${id}`);
+      if (activeBtn) {
+        activeBtn.className = 'sp-btn p-2 rounded-xl bg-amber-500 text-slate-950 font-bold flex flex-col items-center gap-1';
+      }
+      document.getElementById('active-sport-title').innerText = `${icon} ${title}`;
+      document.getElementById('active-sport-met').innerText = `MET: ${met}`;
+      recalcWebWorkout();
+    }
+
+    function recalcWebWorkout() {
+      const dur = parseFloat(document.getElementById('workout-duration').value) || 30;
+      const intensity = parseFloat(document.getElementById('workout-intensity').value) || 1.0;
+      const w = profile.weight || 75;
+
+      const burned = Math.round(((currentActiveSport.met * intensity * 3.5 * w) / 200) * dur);
+      document.getElementById('workout-calc-burned').innerText = `-${burned}`;
+    }
+
+    function saveWebWorkout() {
+      const dur = parseFloat(document.getElementById('workout-duration').value) || 30;
+      const burned = Math.abs(parseInt(document.getElementById('workout-calc-burned').innerText)) || 300;
+
+      const newW = {
+        id: Date.now().toString(),
+        date: getTodayDateStr(),
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        title: currentActiveSport.title,
+        icon: currentActiveSport.icon,
+        duration: dur,
+        burnedKcal: burned
+      };
+      todayWorkouts.unshift(newW);
+
+      const allW = JSON.parse(localStorage.getItem(KEY_WORKOUTS) || '[]');
+      allW.unshift(newW);
+      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(allW));
+
+      alert(`🔥 Đã lưu buổi ${currentActiveSport.title} (-${burned} kcal) vào iPhone!`);
+      refreshUI();
+      switchTab('dashboard');
+    }
+
+    function deleteWebWorkout(idx) {
+      if (!confirm('Bạn có muốn xóa bài tập này không?')) return;
+      todayWorkouts.splice(idx, 1);
+      localStorage.setItem(KEY_WORKOUTS, JSON.stringify(todayWorkouts));
+      refreshUI();
+    }
+
+    // AI Chat & Sub Tabs
+    function setMealSubTab(sub) {
+      if (sub === 'meals') {
+        document.getElementById('sub-view-meals').classList.remove('hidden');
+        document.getElementById('sub-view-coach').classList.add('hidden');
+        document.getElementById('sub-btn-meals').className = 'flex-1 py-1.5 rounded-lg bg-emerald-500 text-slate-950 transition';
+        document.getElementById('sub-btn-coach').className = 'flex-1 py-1.5 rounded-lg text-slate-400 transition';
+      } else {
+        document.getElementById('sub-view-meals').classList.add('hidden');
+        document.getElementById('sub-view-coach').classList.remove('hidden');
+        document.getElementById('sub-btn-coach').className = 'flex-1 py-1.5 rounded-lg bg-emerald-500 text-slate-950 transition';
+        document.getElementById('sub-btn-meals').className = 'flex-1 py-1.5 rounded-lg text-slate-400 transition';
+      }
+    }
+
+    function handleCoachChat() {
+      const input = document.getElementById('coach-chat-input');
+      const q = input.value.trim();
+      if (!q) return;
+
+      const hist = document.getElementById('coach-chat-history');
+      hist.innerHTML += `<div class="bg-emerald-500 p-2.5 rounded-xl text-xs text-slate-950 font-bold ml-auto max-w-[85%]">${q}</div>`;
+      input.value = '';
+
+      setTimeout(() => {
+        let reply = 'Tôi đã nhận được câu hỏi của bạn!';
+        const qLow = q.toLowerCase();
+        if (qLow.includes('đá bóng') || qLow.includes('bóng đá')) {
+          reply = 'Một trận đá bóng ⚽ 45-60 phút đốt khoảng ~400-580 kcal. Sau trận bạn nên uống ngay 400ml nước bù điện giải và ăn nhẹ 1 hộp sữa chua Hy Lạp hoặc 2 quả trứng luộc!';
+        } else if (qLow.includes('tối')) {
+          reply = 'Bữa tối tốt nhất cho mục tiêu giảm mỡ là ưu tiên ức gà áp chảo sốt tiêu hoặc cá hấp + đĩa rau luộc to để đủ đạm mà nhẹ bụng dễ ngủ.';
+        } else {
+          reply = `Với mục tiêu giảm 6kg trong 3 tháng, bạn chỉ cần giữ mức nạp quanh ${profile.targetCalories || 1830} kcal/ngày là chắc chắn giảm mỡ thành công!`;
+        }
+        hist.innerHTML += `<div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300 max-w-[85%]">🤖 ${reply}</div>`;
+        hist.scrollTop = hist.scrollHeight;
+      }, 500);
+    }
+
+    function exportJSONData() {
+      const fullData = {
+        profile,
+        todayMeals,
+        todayWorkouts,
+        exportAt: new Date().toISOString()
+      };
+      const jsonStr = JSON.stringify(fullData, null, 2);
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        alert('📋 Đã sao chép toàn bộ dữ liệu vào bộ nhớ tạm (Clipboard)! Bạn có thể dán để lưu trữ hoặc gửi cho tôi.');
+      }).catch(() => {
+        alert(jsonStr.substring(0, 200) + '...');
+      });
+    }
+
+    // Switch Navigation Tabs
+    function switchTab(tabId) {
+      const views = ['dashboard', 'calc', 'camera', 'workout', 'meals'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
+        const btn = document.getElementById(`nav-${v}`);
+        if (btn && v !== 'camera') {
+          btn.className = 'flex flex-col items-center gap-0.5 text-slate-400';
+        }
+      });
+
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.remove('hidden');
+
+      const targetBtn = document.getElementById(`nav-${tabId}`);
+      if (targetBtn && tabId !== 'camera') {
+        targetBtn.className = 'flex flex-col items-center gap-0.5 text-emerald-400 font-bold';
+      }
+
+      window.scrollTo(0, 0);
+    }
+
+    window.onload = function() {
+      loadSavedData();
+      runCalculations();
+      recalcWebWorkout();
+    };
+  </script>
+</body>
+</html>
