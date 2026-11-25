@@ -1919,7 +1919,7 @@
       statusBox.classList.remove('hidden');
 
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
         const prompt = `Bạn là chuyên gia dinh dưỡng Việt Nam (Viện Dinh Dưỡng Quốc Gia & USDA).
 Hãy tra cứu giá trị dinh dưỡng TRÊN MỖI 100g (hoặc 100ml nếu là đồ uống) cho món: "${foodQuery}".
 Trả về JSON duy nhất đúng cấu trúc sau (không giải thích ngoài JSON):
@@ -2609,7 +2609,7 @@ Nếu đầu vào hoàn toàn không phải thức ăn/đồ uống, trả về 
         try {
           const base64Data = dataUrl.split(',')[1];
           const mimeType = file.type || 'image/jpeg';
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
           const prompt = `Bạn là chuyên gia dinh dưỡng Việt Nam & AI Vision. Kiểm tra ảnh này:
 1. NẾU KHÔNG PHẢI THỨC ĂN/ĐỒ UỐNG (bàn phím, đồ vật, người...): trả về JSON {"isFood": false, "message": "Ảnh không phải món ăn (Phát hiện: [tên vật thể]). Vui lòng chụp đúng đĩa thức ăn!"}
@@ -2810,7 +2810,7 @@ Trả về JSON duy nhất: {"isFood": true, "foodName": "...", "weightGrams": 3
           coachStatus.className = 'text-emerald-400';
         }
         if (coachBadge) {
-          coachBadge.innerText = 'Gemini 2.5 Online';
+          coachBadge.innerText = 'Gemini 3.8 Online';
           coachBadge.className = 'text-[9px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800';
         }
       } else {
@@ -2996,7 +2996,7 @@ Nguyên tắc trả lời:
       sendBtn.innerText = '...';
 
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
         // Send last 10 turns for smooth multi-turn context
         const contents = coachMessages.slice(-10).map(m => ({
           role: m.role === 'user' ? 'user' : 'model',
